@@ -49,52 +49,88 @@ export default function FryaChat({ profile, currentDay }: FryaChatProps) {
 
       const ai = new GoogleGenAI({ apiKey });
       
+      // Calculate Stats for Context
+      const completedDays = Object.values(profile.dailyLogs).filter(l => l.completed).length;
+      const daysPassed = Math.max(currentDay - 1, 1);
+      const consistency = Math.round((completedDays / daysPassed) * 100);
+      
+      // Recent History (Last 7 days)
+      const recentLogs = [];
+      for (let i = Math.max(1, currentDay - 7); i < currentDay; i++) {
+          const log = profile.dailyLogs[i];
+          recentLogs.push(`Dia ${i}: ${log?.completed ? '✅ Concluído' : '❌ Falho'} ${log?.weight ? `(${log.weight}kg)` : ''}`);
+      }
+      const recentHistoryStr = recentLogs.length > 0 ? recentLogs.join('\n') : "Nenhum histórico recente.";
+
       // Construct System Context
       const context = `
         Você é Frya, a assistente de elite do app EliteVelocity.
         
-        CONTEXTO DO ALUNO:
+        PERFIL DO AGENTE (USUÁRIO):
         Nome: ${profile.studentName}
-        Peso: ${profile.weight}kg
+        Peso Atual: ${profile.weight}kg
         Meta: Perder ${profile.targetLostWeight}kg
         Focos: ${profile.focuses.join(', ')}
         Protocolo Jejum: ${profile.protocol}
-        Dia Atual da Missão: ${currentDay} de ${profile.duration}
+        Protocolo Treino: ${profile.workoutProtocol}
         
-        DIRETRIZES:
-        - Responda de forma motivacional, técnica e acionável.
-        - Use emojis e uma linguagem "gamer/elite" (ex: "missão", "grind", "level up").
-        - Se o usuário perguntar sobre o treino de hoje, analise o dia ${currentDay} (considere a divisão de treino baseada nos focos).
-        - Se o usuário pedir para mudar o foco, explique como fazer (mas você não pode mudar diretamente ainda).
-        - Seja breve e direto.
+        STATUS DA MISSÃO:
+        Dia Atual: ${currentDay} de ${profile.duration}
+        Consistência Global: ${consistency}%
+        
+        MATRIZ DE DISCIPLINA (Últimos 7 dias):
+        ${recentHistoryStr}
+        
+        SUAS CAPACIDADES:
+        1. REFORMULAR TREINOS: Se o usuário pedir, sugira ajustes na divisão de treino baseada nos focos atuais e no protocolo escolhido.
+        2. NUTRIÇÃO: Dê dicas personalizadas baseadas no protocolo de jejum (${profile.protocol}) e meta de peso. Sugira o que comer na janela alimentar.
+        3. ANÁLISE DE PROGRESSO: Analise a consistência recente. Se estiver baixa (<70%), dê um "choque de realidade" duro. Se alta, parabenize como um comandante.
+        4. RESPOSTAS ABERTAS: Responda sobre fisiologia, execução de exercícios e mindset.
+        
+        DIRETRIZES DE PERSONALIDADE:
+        - Você é uma IA de alta performance. Não seja "fofa". Seja técnica, direta e exigente.
+        - Use termos como "Guerreiro", "Operador", "Agente", "Grind".
+        - Use emojis táticos (🎯, ⚔️, 💀, ⚡, 🧬).
+        - Mantenha respostas concisas (máx 3 parágrafos curtos), a menos que peçam um plano detalhado.
+        - Se o usuário perguntar "o que treinar hoje", analise o dia ${currentDay} considerando que a semana começa no Domingo (Dia 1 da semana, mas o dia da missão é corrido).
       `;
 
-      const model = ai.models.getGenerativeModel({
-        model: "gemini-2.5-flash-lite-latest",
-        systemInstruction: context,
-      });
+      const model = null; // Removed incorrect initialization
 
-      // Simple chat history for context (last 5 messages)
-      const history = messages.slice(-5).map(m => ({
+      // Simple chat history for context (last 10 messages)
+      const history = messages.slice(-10).map(m => ({
         role: m.role,
         parts: [{ text: m.text }]
       }));
 
-      const chat = model.startChat({
-        history: history
+      // Add current user message
+      const contents = [
+        ...history,
+        { role: 'user', parts: [{ text: userMsg.text }] }
+      ];
+
+      const result = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: contents,
+        config: {
+          systemInstruction: context,
+        }
       });
 
-      const result = await chat.sendMessage(userMsg.text);
-      const responseText = result.response.text();
+      const responseText = result.text;
 
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'model', text: responseText }]);
+      if (responseText) {
+        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'model', text: responseText }]);
+      } else {
+        throw new Error("Empty response from Frya");
+      }
 
     } catch (error) {
       console.error("Frya Error:", error);
       setMessages(prev => [...prev, { 
         id: (Date.now() + 1).toString(), 
         role: 'model', 
-        text: "⚠️ Erro de conexão com o núcleo da Frya. Tente novamente." 
+        text: "⚠️ Erro de conexão com o núcleo da Frya. Verifique sua chave de API ou conexão." 
       }]);
     } finally {
       setIsLoading(false);
@@ -136,13 +172,19 @@ export default function FryaChat({ profile, currentDay }: FryaChatProps) {
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div 
-                    className={`max-w-[80%] p-3 rounded-xl text-sm ${
+                    className={`max-w-[85%] p-3 rounded-xl text-sm ${
                       msg.role === 'user' 
                         ? 'bg-zinc-800 text-white rounded-br-none' 
                         : 'bg-[#00FF80]/10 border border-[#00FF80]/20 text-zinc-200 rounded-bl-none'
                     }`}
                   >
-                    {msg.text}
+                    {/* Render newlines properly */}
+                    {msg.text.split('\n').map((line, i) => (
+                      <React.Fragment key={i}>
+                        {line}
+                        {i < msg.text.split('\n').length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
                   </div>
                 </div>
               ))}
