@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Check, Dumbbell, Droplets, Beef, Circle } from 'lucide-react';
 import { Profile } from '@/types';
+import { calculateProteinTarget } from '@/utils/nutrition-logic';
 
 interface DailyMissionsProps {
   profile: Profile;
@@ -22,7 +23,7 @@ export default function DailyMissions({ profile, dayNum, onToggleWorkout, onUpda
   const weight = parseFloat(profile.weight);
   
   // Targets
-  const proteinTarget = Math.round(weight * 2); // 2g/kg
+  const proteinTarget = calculateProteinTarget(profile);
   const waterTarget = Math.round((weight / 30) * 1000); // 35ml/kg approx (using /30 logic from prompt)
 
   return (
@@ -109,7 +110,7 @@ export default function DailyMissions({ profile, dayNum, onToggleWorkout, onUpda
                 <h4 className={`font-bold uppercase tracking-wider ${log.proteinCompleted ? 'text-white' : 'text-zinc-400'}`}>
                   Proteína
                 </h4>
-                <p className="text-xs text-zinc-500">Meta: {proteinTarget}g (2g/kg)</p>
+                <p className="text-xs text-zinc-500">Meta: {proteinTarget}g (Personalizada)</p>
               </div>
             </div>
             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${

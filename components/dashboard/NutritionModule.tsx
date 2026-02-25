@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Clock, Flame, Utensils } from 'lucide-react';
+import { Clock, Flame, Utensils, Scale, Activity } from 'lucide-react';
 import { Profile } from '@/types';
+import { calculateProteinTarget, calculateCaloriesTarget, getCurrentWeight, calculateBMI, getBMIStatus } from '@/utils/nutrition-logic';
 
 interface NutritionModuleProps {
   profile: Profile;
@@ -12,13 +13,25 @@ interface NutritionModuleProps {
     isFasting: boolean;
   };
   dayOfWeek: number; // 0-6
+  currentDay: number;
 }
 
-export default function NutritionModule({ profile, fastingStatus, dayOfWeek }: NutritionModuleProps) {
+export default function NutritionModule({ profile, fastingStatus, dayOfWeek, currentDay }: NutritionModuleProps) {
   const isFastingDay = profile.fastingDays.includes(dayOfWeek);
-  const weight = parseFloat(profile.weight);
-  const calories = Math.round(weight * 24);
-  const protein = Math.round(weight * 2);
+  
+  // Dynamic calculations based on current weight
+  const currentWeight = getCurrentWeight(profile, currentDay);
+  const bmi = calculateBMI(currentWeight, parseFloat(profile.height));
+  const bmiStatus = getBMIStatus(parseFloat(bmi));
+  
+  // Recalculate targets based on CURRENT weight, not initial
+  // We need to pass a "virtual" profile with the current weight to the helper functions
+  // or update the helper functions to accept weight directly. 
+  // For now, let's just create a temporary object since the helpers expect Profile
+  const tempProfile = { ...profile, weight: currentWeight.toString() };
+  
+  const calories = calculateCaloriesTarget(tempProfile);
+  const protein = calculateProteinTarget(tempProfile);
 
   return (
     <motion.div 
@@ -43,6 +56,28 @@ export default function NutritionModule({ profile, fastingStatus, dayOfWeek }: N
             {fastingStatus.state}
           </div>
         )}
+      </div>
+
+      {/* Body Stats Section - Always Visible */}
+      <div className="grid grid-cols-2 gap-4 mb-6 bg-zinc-900/30 p-4 rounded-xl border border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400">
+            <Scale size={20} />
+          </div>
+          <div>
+            <p className="text-xs text-zinc-500 uppercase font-bold">Peso Atual</p>
+            <p className="text-xl font-black text-white">{currentWeight} <span className="text-xs font-normal text-zinc-500">kg</span></p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400">
+            <Activity size={20} />
+          </div>
+          <div>
+            <p className="text-xs text-zinc-500 uppercase font-bold">IMC ({bmiStatus})</p>
+            <p className="text-xl font-black text-white">{bmi}</p>
+          </div>
+        </div>
       </div>
 
       {isFastingDay ? (

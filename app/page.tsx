@@ -8,6 +8,8 @@ import NutritionModule from '@/components/dashboard/NutritionModule';
 import WorkoutModule from '@/components/dashboard/WorkoutModule';
 import HydrationModule from '@/components/dashboard/HydrationModule';
 import DailyMissions from '@/components/dashboard/DailyMissions';
+import RunningProgressModule from '@/components/dashboard/RunningProgressModule';
+import ProgressionSummaryModule from '@/components/dashboard/ProgressionSummaryModule';
 import SpreadsheetView from '@/components/spreadsheet/SpreadsheetView';
 import Metrics from '@/components/history/Metrics';
 import FryaChat, { FryaChatRef } from '@/components/chat/FryaChat';
@@ -26,7 +28,12 @@ export default function Home() {
     saveProfile,
     setCurrentProfileId,
     markDayComplete,
-    deleteProfile
+    deleteProfile,
+    updateWaterIntake,
+    updateProteinIntake,
+    toggleWorkoutStatus,
+    updateExerciseNote,
+    updateDistanceRun
   } = useEliteVelocity();
 
   const [dashboardTab, setDashboardTab] = useState<'panel' | 'sheet' | 'history'>('panel');
@@ -152,53 +159,75 @@ export default function Home() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-6"
+              className="space-y-6"
             >
-              <NutritionModule 
-                profile={currentProfile} 
-                fastingStatus={fastingStatus} 
-                dayOfWeek={dayOfWeek}
-              />
-              <HydrationModule 
+              {/* Running Progress - Main Focus */}
+              <RunningProgressModule 
                 profile={currentProfile}
-                dayNum={currentDayNumber}
-                onUpdateWater={(amount) => updateWaterIntake(currentDayNumber, amount)}
-              />
-              <WorkoutModule 
-                profile={currentProfile}
-                dayNum={currentDayNumber}
-                isCompleted={isCompleted}
-                isOutOfBounds={isOutOfBounds}
-                onComplete={() => {
-                  const weight = prompt("Peso atual (kg):", currentProfile.weight);
-                  const speed = currentProfile.focuses.includes('vel') ? prompt("Velocidade Máxima (km/h):") : undefined;
-                  
-                  markDayComplete(
-                    currentDayNumber, 
-                    weight ? parseFloat(weight) : undefined, 
-                    speed ? parseFloat(speed) : undefined
-                  );
-                }}
+                currentDay={currentDayNumber}
+                onUpdateDistance={updateDistanceRun}
               />
 
-              {/* Badges Preview */}
-              <div className="col-span-1 md:col-span-3 glass-panel rounded-2xl p-6">
-                <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4">Conquistas Desbloqueadas</h3>
-                <div className="flex flex-wrap gap-3">
-                  {currentProfile.badges && currentProfile.badges.length > 0 ? (
-                    currentProfile.badges.map(badgeId => {
-                      const badge = BADGES.find(b => b.id === badgeId);
-                      if (!badge) return null;
-                      return (
-                        <div key={badgeId} className="bg-[#00FF80]/10 border border-[#00FF80]/30 px-3 py-2 rounded-lg flex items-center gap-2">
-                          <span className="text-lg">{badge.icon}</span>
-                          <span className="text-xs font-bold text-[#00FF80] uppercase">{badge.label}</span>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className="text-zinc-600 text-sm italic">Nenhuma conquista ainda. Continue treinando!</p>
-                  )}
+              {/* Progression Summary */}
+              <ProgressionSummaryModule 
+                profile={currentProfile}
+                currentDay={currentDayNumber}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Column 1: Nutrition & Hydration */}
+                <div className="space-y-6">
+                  <NutritionModule 
+                    profile={currentProfile} 
+                    fastingStatus={fastingStatus} 
+                    dayOfWeek={dayOfWeek}
+                    currentDay={currentDayNumber}
+                  />
+                  <HydrationModule 
+                    profile={currentProfile}
+                    dayNum={currentDayNumber}
+                    onUpdateWater={(amount) => updateWaterIntake(currentDayNumber, amount)}
+                  />
+                </div>
+
+                {/* Column 2: Workout Details */}
+                <WorkoutModule 
+                  profile={currentProfile}
+                  dayNum={currentDayNumber}
+                  isCompleted={isCompleted}
+                  isOutOfBounds={isOutOfBounds}
+                  onComplete={() => {}} 
+                  onUpdateNote={(exercise, note) => updateExerciseNote(currentDayNumber, exercise, note)}
+                />
+
+                {/* Column 3: Daily Missions Checklist & Badges */}
+                <div className="space-y-6">
+                  <DailyMissions 
+                    profile={currentProfile}
+                    dayNum={currentDayNumber}
+                    onToggleWorkout={(status) => toggleWorkoutStatus(currentDayNumber, status)}
+                    onUpdateProtein={(amount) => updateProteinIntake(currentDayNumber, amount)}
+                  />
+                  
+                  <div className="glass-panel rounded-2xl p-6">
+                    <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4">Conquistas Desbloqueadas</h3>
+                    <div className="flex flex-wrap gap-3">
+                      {currentProfile.badges && currentProfile.badges.length > 0 ? (
+                        currentProfile.badges.map(badgeId => {
+                          const badge = BADGES.find(b => b.id === badgeId);
+                          if (!badge) return null;
+                          return (
+                            <div key={badgeId} className="bg-[#00FF80]/10 border border-[#00FF80]/30 px-3 py-2 rounded-lg flex items-center gap-2">
+                              <span className="text-lg">{badge.icon}</span>
+                              <span className="text-xs font-bold text-[#00FF80] uppercase">{badge.label}</span>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-zinc-600 text-sm italic">Nenhuma conquista ainda. Continue treinando!</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>

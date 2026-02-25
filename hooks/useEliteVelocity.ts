@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Profile, ViewMode, DailyLog } from '@/types';
 import { FASTING_PROTOCOLS, BADGES } from '@/utils/constants';
 import { differenceInDays, startOfDay } from 'date-fns';
+import { calculateProteinTarget } from '@/utils/nutrition-logic';
 
 const STORAGE_KEY = 'elite_tracker_profiles';
 
@@ -260,9 +261,8 @@ export const useEliteVelocity = () => {
       maxSpeed: undefined
     };
 
-    // Target: 2g per kg
-    const weight = parseFloat(currentProfile.weight);
-    const target = Math.round(weight * 2);
+    // Calculate dynamic target
+    const target = calculateProteinTarget(currentProfile);
     const isGoalReached = amount >= target;
 
     const updatedLog = {
@@ -310,6 +310,72 @@ export const useEliteVelocity = () => {
     });
   }, [currentProfile, updateProfileData]);
 
+  const updateExerciseNote = useCallback((dayNum: number, exercise: string, note: string) => {
+    if (!currentProfile) return;
+
+    const currentLog = currentProfile.dailyLogs[dayNum] || {
+      completed: false,
+      water: 0,
+      protein: 0,
+      workoutCompleted: false,
+      waterCompleted: false,
+      proteinCompleted: false,
+      weight: undefined,
+      maxSpeed: undefined,
+      exerciseNotes: {}
+    };
+
+    const currentNotes = currentLog.exerciseNotes || {};
+    
+    const updatedLog = {
+      ...currentLog,
+      exerciseNotes: {
+        ...currentNotes,
+        [exercise]: note
+      }
+    };
+
+    const updatedLogs = {
+      ...currentProfile.dailyLogs,
+      [dayNum]: updatedLog
+    };
+
+    updateProfileData({
+      dailyLogs: updatedLogs
+    });
+  }, [currentProfile, updateProfileData]);
+
+  const updateDistanceRun = useCallback((dayNum: number, distance: number) => {
+    if (!currentProfile) return;
+
+    const currentLog = currentProfile.dailyLogs[dayNum] || {
+      completed: false,
+      water: 0,
+      protein: 0,
+      workoutCompleted: false,
+      waterCompleted: false,
+      proteinCompleted: false,
+      weight: undefined,
+      maxSpeed: undefined,
+      exerciseNotes: {},
+      distanceRun: 0
+    };
+
+    const updatedLog = {
+      ...currentLog,
+      distanceRun: distance
+    };
+
+    const updatedLogs = {
+      ...currentProfile.dailyLogs,
+      [dayNum]: updatedLog
+    };
+
+    updateProfileData({
+      dailyLogs: updatedLogs
+    });
+  }, [currentProfile, updateProfileData]);
+
   return {
     profiles,
     currentProfile,
@@ -325,6 +391,8 @@ export const useEliteVelocity = () => {
     markDayComplete,
     updateWaterIntake,
     updateProteinIntake,
-    toggleWorkoutStatus
+    toggleWorkoutStatus,
+    updateExerciseNote,
+    updateDistanceRun
   };
 };

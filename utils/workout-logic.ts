@@ -167,3 +167,41 @@ export const getTrainingExamples = (dayNum: number, profile: Profile): string[] 
   
   return ["Treino Livre"];
 };
+
+export const getFullWorkoutHistory = (profile: Profile): { day: number; title: string; exercises: string[]; completed: boolean }[] => {
+  const history = [];
+  const duration = parseInt(profile.duration);
+
+  for (let i = 1; i <= duration; i++) {
+    const date = new Date(profile.startDate);
+    date.setDate(date.getDate() + (i - 1));
+    const dayOfWeek = date.getDay(); // 0 = Sun
+
+    let title = "Treino Livre";
+    let exercises: string[] = [];
+
+    if (dayOfWeek === 0) {
+      title = "Repouso Tático";
+      exercises = ["Mobilidade e Recuperação"];
+    } else {
+      const splitIndex = dayOfWeek - 1;
+      const split = getWorkoutSplit(profile.gender, profile.focuses, profile.workoutProtocol);
+      if (split[splitIndex]) {
+        title = split[splitIndex].main;
+        exercises = split[splitIndex].exercises;
+      }
+    }
+
+    const log = profile.dailyLogs[i];
+    const completed = log?.workoutCompleted || false;
+
+    history.push({
+      day: i,
+      title,
+      exercises,
+      completed
+    });
+  }
+
+  return history;
+};

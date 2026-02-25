@@ -8,6 +8,8 @@ export interface DailyLog {
   proteinCompleted: boolean;
   maxSpeed?: number;
   notes?: string;
+  exerciseNotes?: Record<string, string>;
+  distanceRun?: number;
 }
 
 export interface Profile {
