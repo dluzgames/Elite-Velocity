@@ -211,6 +211,105 @@ export const useEliteVelocity = () => {
 
   }, [currentProfile, updateProfileData]);
 
+  const updateWaterIntake = useCallback((dayNum: number, amount: number) => {
+    if (!currentProfile) return;
+
+    const currentLog = currentProfile.dailyLogs[dayNum] || {
+      completed: false,
+      water: 0,
+      protein: 0,
+      workoutCompleted: false,
+      waterCompleted: false,
+      proteinCompleted: false,
+      weight: undefined,
+      maxSpeed: undefined
+    };
+
+    // Auto-complete water mission if target reached (weight / 30 * 1000)
+    const weight = parseFloat(currentProfile.weight);
+    const target = Math.round((weight / 30) * 1000);
+    const isGoalReached = amount >= target;
+
+    const updatedLog = {
+      ...currentLog,
+      water: amount,
+      waterCompleted: isGoalReached
+    };
+
+    const updatedLogs = {
+      ...currentProfile.dailyLogs,
+      [dayNum]: updatedLog
+    };
+
+    updateProfileData({
+      dailyLogs: updatedLogs
+    });
+  }, [currentProfile, updateProfileData]);
+
+  const updateProteinIntake = useCallback((dayNum: number, amount: number) => {
+    if (!currentProfile) return;
+
+    const currentLog = currentProfile.dailyLogs[dayNum] || {
+      completed: false,
+      water: 0,
+      protein: 0,
+      workoutCompleted: false,
+      waterCompleted: false,
+      proteinCompleted: false,
+      weight: undefined,
+      maxSpeed: undefined
+    };
+
+    // Target: 2g per kg
+    const weight = parseFloat(currentProfile.weight);
+    const target = Math.round(weight * 2);
+    const isGoalReached = amount >= target;
+
+    const updatedLog = {
+      ...currentLog,
+      protein: amount,
+      proteinCompleted: isGoalReached
+    };
+
+    const updatedLogs = {
+      ...currentProfile.dailyLogs,
+      [dayNum]: updatedLog
+    };
+
+    updateProfileData({
+      dailyLogs: updatedLogs
+    });
+  }, [currentProfile, updateProfileData]);
+
+  const toggleWorkoutStatus = useCallback((dayNum: number, status: boolean) => {
+    if (!currentProfile) return;
+
+    const currentLog = currentProfile.dailyLogs[dayNum] || {
+      completed: false,
+      water: 0,
+      protein: 0,
+      workoutCompleted: false,
+      waterCompleted: false,
+      proteinCompleted: false,
+      weight: undefined,
+      maxSpeed: undefined
+    };
+
+    const updatedLog = {
+      ...currentLog,
+      workoutCompleted: status
+    };
+
+    const updatedLogs = {
+      ...currentProfile.dailyLogs,
+      [dayNum]: updatedLog
+    };
+
+    updateProfileData({
+      dailyLogs: updatedLogs
+    });
+  }, [currentProfile, updateProfileData]);
+
   return {
     profiles,
     currentProfile,
@@ -223,6 +322,9 @@ export const useEliteVelocity = () => {
     saveProfile,
     updateProfileData,
     deleteProfile,
-    markDayComplete
+    markDayComplete,
+    updateWaterIntake,
+    updateProteinIntake,
+    toggleWorkoutStatus
   };
 };

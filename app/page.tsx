@@ -6,9 +6,11 @@ import Onboarding from '@/components/Onboarding';
 import ProfileScreen from '@/components/ProfileScreen';
 import NutritionModule from '@/components/dashboard/NutritionModule';
 import WorkoutModule from '@/components/dashboard/WorkoutModule';
+import HydrationModule from '@/components/dashboard/HydrationModule';
+import DailyMissions from '@/components/dashboard/DailyMissions';
 import SpreadsheetView from '@/components/spreadsheet/SpreadsheetView';
 import Metrics from '@/components/history/Metrics';
-import FryaChat from '@/components/chat/FryaChat';
+import FryaChat, { FryaChatRef } from '@/components/chat/FryaChat';
 import { motion, AnimatePresence } from 'motion/react';
 import { LayoutDashboard, Table, Activity, Users, Trophy } from 'lucide-react';
 import { BADGES } from '@/utils/constants';
@@ -28,6 +30,7 @@ export default function Home() {
   } = useEliteVelocity();
 
   const [dashboardTab, setDashboardTab] = useState<'panel' | 'sheet' | 'history'>('panel');
+  const fryaChatRef = React.useRef<FryaChatRef>(null);
 
   // Loading Screen
   if (viewMode === 'loading') {
@@ -156,6 +159,11 @@ export default function Home() {
                 fastingStatus={fastingStatus} 
                 dayOfWeek={dayOfWeek}
               />
+              <HydrationModule 
+                profile={currentProfile}
+                dayNum={currentDayNumber}
+                onUpdateWater={(amount) => updateWaterIntake(currentDayNumber, amount)}
+              />
               <WorkoutModule 
                 profile={currentProfile}
                 dayNum={currentDayNumber}
@@ -208,15 +216,13 @@ export default function Home() {
                 profile={currentProfile} 
                 currentDay={currentDayNumber}
                 onToggleDay={(day) => {
-                  // Toggle logic if needed, or just view
-                  // For now, let's allow marking past days as complete via prompt too?
-                  // Or just keep it read-only for simplicity in this turn, or simple toggle
-                  // The prompt logic is a bit intrusive for a toggle. 
-                  // Let's just alert for now that they should use the main dashboard for today.
                   if (day === currentDayNumber) {
                     setDashboardTab('panel');
                   }
-                }} 
+                }}
+                onAskAI={(prompt) => {
+                  fryaChatRef.current?.triggerMessage(prompt);
+                }}
               />
             </motion.div>
           )}
@@ -233,7 +239,7 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        <FryaChat profile={currentProfile} currentDay={currentDayNumber} />
+        <FryaChat ref={fryaChatRef} profile={currentProfile} currentDay={currentDayNumber} />
       </div>
     );
   }

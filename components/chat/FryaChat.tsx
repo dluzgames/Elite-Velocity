@@ -2,20 +2,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send, Sparkles } from 'lucide-react';
 import { Profile } from '@/types';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
+
+export interface FryaChatRef {
+  triggerMessage: (msg: string) => void;
+  open: () => void;
+}
 
 interface FryaChatProps {
   profile: Profile;
   currentDay: number;
+  ref?: React.Ref<FryaChatRef>;
 }
 
-interface Message {
-  id: string;
-  role: 'user' | 'model';
-  text: string;
-}
-
-export default function FryaChat({ profile, currentDay }: FryaChatProps) {
+export default function FryaChat({ profile, currentDay, ref }: FryaChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { 
@@ -28,17 +28,25 @@ export default function FryaChat({ profile, currentDay }: FryaChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Expose triggerMessage to parent via ref
+  React.useImperativeHandle(ref, () => ({
+    triggerMessage: (text: string) => {
+      setIsOpen(true);
+      const userMsg: Message = { id: Date.now().toString(), role: 'user', text };
+      setMessages(prev => [...prev, userMsg]);
+      // We need to call the API logic here, but handleSend relies on 'input' state.
+      // Let's refactor the API call logic into a separate function that accepts text.
+      sendMessageToGemini(text);
+    },
+    open: () => setIsOpen(true)
+  }));
+
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', text: input };
-    setMessages(prev => [...prev, userMsg]);
-    setInput('');
+  const sendMessageToGemini = async (text: string) => {
     setIsLoading(true);
 
     try {
@@ -86,16 +94,17 @@ export default function FryaChat({ profile, currentDay }: FryaChatProps) {
         2. NUTRIÇÃO: Dê dicas personalizadas baseadas no protocolo de jejum (${profile.protocol}) e meta de peso. Sugira o que comer na janela alimentar.
         3. ANÁLISE DE PROGRESSO: Analise a consistência recente. Se estiver baixa (<70%), dê um "choque de realidade" duro. Se alta, parabenize como um comandante.
         4. RESPOSTAS ABERTAS: Responda sobre fisiologia, execução de exercícios e mindset.
+        5. ANÁLISE DE TREINO ESPECÍFICO: Se o usuário perguntar sobre um treino específico (ex: "Dia 15: Pernas"), explique os benefícios, dê dicas de execução e sugira cargas/intensidade.
         
-        DIRETRIZES DE PERSONALIDADE:
-        - Você é uma IA de alta performance. Não seja "fofa". Seja técnica, direta e exigente.
-        - Use termos como "Guerreiro", "Operador", "Agente", "Grind".
-        - Use emojis táticos (🎯, ⚔️, 💀, ⚡, 🧬).
+        DIRETRIZES DE PERSONALIDADE E ESTILO:
+        - Você é uma IA de alta performance, mas adaptável.
+        - VARIE SEU TOM: Se o usuário estiver desanimado, seja um pilar de força. Se estiver motivado, desafie-o a ir além.
+        - Use termos táticos e "gamer/elite" (ex: "Guerreiro", "Operador", "Agente", "Grind", "XP", "Loot", "Boss Battle").
+        - Use emojis táticos com moderação mas impacto (🎯, ⚔️, 💀, ⚡, 🧬, 🛡️).
         - Mantenha respostas concisas (máx 3 parágrafos curtos), a menos que peçam um plano detalhado.
-        - Se o usuário perguntar "o que treinar hoje", analise o dia ${currentDay} considerando que a semana começa no Domingo (Dia 1 da semana, mas o dia da missão é corrido).
+        - Evite repetições robóticas. Seja criativa nas saudações e despedidas.
+        - Se o usuário perguntar "o que treinar hoje", analise o dia ${currentDay} considerando que a semana começa no Domingo.
       `;
-
-      const model = null; // Removed incorrect initialization
 
       // Simple chat history for context (last 10 messages)
       const history = messages.slice(-10).map(m => ({
@@ -106,7 +115,7 @@ export default function FryaChat({ profile, currentDay }: FryaChatProps) {
       // Add current user message
       const contents = [
         ...history,
-        { role: 'user', parts: [{ text: userMsg.text }] }
+        { role: 'user', parts: [{ text: text }] }
       ];
 
       const result = await ai.models.generateContent({
@@ -114,6 +123,8 @@ export default function FryaChat({ profile, currentDay }: FryaChatProps) {
         contents: contents,
         config: {
           systemInstruction: context,
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          temperature: 0.7,
         }
       });
 
@@ -135,6 +146,17 @@ export default function FryaChat({ profile, currentDay }: FryaChatProps) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+    const text = input;
+    setInput('');
+    
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', text };
+    setMessages(prev => [...prev, userMsg]);
+    
+    await sendMessageToGemini(text);
   };
 
   return (

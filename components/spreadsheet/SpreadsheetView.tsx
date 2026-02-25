@@ -1,20 +1,23 @@
-import React, { useMemo } from 'react';
-import { motion } from 'motion/react';
+import React, { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Profile } from '@/types';
 import { getWorkoutSplit, getCardioDetail } from '@/utils/workout-logic';
 import { Check, X } from 'lucide-react';
+import WorkoutDetailsModal from '@/components/dashboard/WorkoutDetailsModal';
 
 interface SpreadsheetViewProps {
   profile: Profile;
   currentDay: number;
   onToggleDay: (day: number) => void;
+  onAskAI: (prompt: string) => void;
 }
 
-export default function SpreadsheetView({ profile, currentDay, onToggleDay }: SpreadsheetViewProps) {
+export default function SpreadsheetView({ profile, currentDay, onToggleDay, onAskAI }: SpreadsheetViewProps) {
   const duration = parseInt(profile.duration);
   const startDate = useMemo(() => new Date(profile.startDate), [profile.startDate]);
+  const [selectedWorkout, setSelectedWorkout] = useState<{day: number, name: string, exercises: string[], cardio: string} | null>(null);
   
   // Memoize split to avoid recalculation on every render
   const split = useMemo(() => 
@@ -29,10 +32,13 @@ export default function SpreadsheetView({ profile, currentDay, onToggleDay }: Sp
       const dayOfWeek = date.getDay();
       
       let workoutName = "Descanso / Recuperação";
+      let exercises: string[] = ["Alongamento", "Mobilidade", "Caminhada Leve"];
+
       if (dayOfWeek !== 0) {
         const splitIndex = dayOfWeek - 1;
         if (split[splitIndex]) {
           workoutName = split[splitIndex].main;
+          exercises = split[splitIndex].exercises;
         }
       }
 
@@ -53,6 +59,7 @@ export default function SpreadsheetView({ profile, currentDay, onToggleDay }: Sp
         date: format(date, 'dd/MM'),
         weekDay: format(date, 'EEE', { locale: ptBR }).toUpperCase(),
         workout: workoutName,
+        exercises,
         cardio,
         isCompleted,
         isToday,
@@ -81,7 +88,8 @@ export default function SpreadsheetView({ profile, currentDay, onToggleDay }: Sp
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: row.day * 0.01 }} // Stagger effect
-              className={`border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors ${
+              onClick={() => setSelectedWorkout({ day: row.day, name: row.workout, exercises: row.exercises, cardio: row.cardio })}
+              className={`border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors cursor-pointer ${
                 row.isToday ? 'bg-[#00FF80]/5 border-l-2 border-l-[#00FF80]' : ''
               } ${row.isCompleted ? 'opacity-50' : ''}`}
             >
@@ -104,7 +112,10 @@ export default function SpreadsheetView({ profile, currentDay, onToggleDay }: Sp
               </td>
               <td className="p-4 text-center">
                 <button
-                  onClick={() => onToggleDay(row.day)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleDay(row.day);
+                  }}
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                     row.isCompleted 
                       ? 'bg-[#00FF80] text-black shadow-[0_0_10px_rgba(0,255,128,0.3)]' 
@@ -118,6 +129,27 @@ export default function SpreadsheetView({ profile, currentDay, onToggleDay }: Sp
           ))}
         </tbody>
       </table>
+
+      <WorkoutDetailsModal 
+        isOpen={!!selectedWorkout}
+        onClose={() => setSelectedWorkout(null)}
+        day={selectedWorkout?.day || 0}
+        workoutName={selectedWorkout?.name || ''}
+        exercises={selectedWorkout?.exercises || []}
+        cardio={selectedWorkout?.cardio || ''}
+        onAskAI={() => {
+          if (selectedWorkout) {
+            const prompt = `Analise o treino do Dia ${selectedWorkout.day}: "${selectedWorkout.name}". 
+            
+            Exercícios de Musculação: ${selectedWorkout.exercises.join(', ')}.
+            
+            Protocolo de Cardio: ${selectedWorkout.cardio}.
+            
+            Me dê dicas de execução e estratégia para esse treino completo (musculação + cardio). Explique como encaixar o cardio (antes ou depois) e a intensidade ideal.`;
+            onAskAI(prompt);
+          }
+        }}
+      />
     </div>
   );
 }

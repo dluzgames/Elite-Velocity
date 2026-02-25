@@ -2,6 +2,10 @@ export interface DailyLog {
   completed: boolean;
   weight?: number;
   water: number;
+  protein: number;
+  workoutCompleted: boolean;
+  waterCompleted: boolean;
+  proteinCompleted: boolean;
   maxSpeed?: number;
   notes?: string;
 }
