@@ -4,9 +4,7 @@ import { FASTING_PROTOCOLS, BADGES } from '@/utils/constants';
 import { differenceInDays, startOfDay } from 'date-fns';
 import { calculateProteinTarget } from '@/utils/nutrition-logic';
 
-const STORAGE_KEY = 'elite_tracker_profiles';
-
-export const useEliteVelocity = () => {
+export const useEliteVelocity = (userId?: string) => {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('loading');
@@ -17,16 +15,28 @@ export const useEliteVelocity = () => {
     isFasting: false
   });
 
-  // Load data on mount
+  // Load data on mount or when userId changes
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    if (!userId) {
+      setViewMode('loading');
+      return;
+    }
+
+    const storageKey = `elite_tracker_profiles_${userId}`;
+    const stored = localStorage.getItem(storageKey);
+    
+    // Migration logic: if user specific storage doesn't exist, check old storage
+    const oldStored = localStorage.getItem('elite_tracker_profiles');
+    if (!stored && oldStored) {
+      localStorage.setItem(storageKey, oldStored);
+    }
+
+    const dataToLoad = stored || (oldStored && !stored ? oldStored : null);
+
+    if (dataToLoad) {
       try {
-        const parsed = JSON.parse(stored);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        const parsed = JSON.parse(dataToLoad);
         setProfiles(parsed);
-        // If only one profile exists, select it automatically (optional, but good for UX)
-        // For now, let's go to profiles screen if multiple, or onboarding if none.
         if (Object.keys(parsed).length === 0) {
           setViewMode('onboarding');
         } else {
@@ -39,42 +49,50 @@ export const useEliteVelocity = () => {
     } else {
       setViewMode('onboarding');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [userId]);
 
   const currentProfile = currentProfileId ? profiles[currentProfileId] : null;
 
   const saveProfile = useCallback((profile: Profile) => {
+    if (!userId) return;
+    const storageKey = `elite_tracker_profiles_${userId}`;
+    
+    const profileWithUser = { ...profile, userId };
+    
     setProfiles(prev => {
-      const next = { ...prev, [profile.id]: profile };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      const next = { ...prev, [profileWithUser.id]: profileWithUser };
+      localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
-  }, []);
+  }, [userId]);
 
   const updateProfileData = useCallback((partial: Partial<Profile>) => {
-    if (!currentProfileId) return;
+    if (!currentProfileId || !userId) return;
+    const storageKey = `elite_tracker_profiles_${userId}`;
+
     setProfiles(prev => {
       const current = prev[currentProfileId];
       if (!current) return prev;
       const updated = { ...current, ...partial };
       const next = { ...prev, [currentProfileId]: updated };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
-  }, [currentProfileId]);
+  }, [currentProfileId, userId]);
 
   const deleteProfile = useCallback(() => {
-    if (!currentProfileId) return;
+    if (!currentProfileId || !userId) return;
+    const storageKey = `elite_tracker_profiles_${userId}`;
+
     setProfiles(prev => {
       const next = { ...prev };
       delete next[currentProfileId];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
     setCurrentProfileId(null);
     setViewMode('profiles');
-  }, [currentProfileId]);
+  }, [currentProfileId, userId]);
 
   // Calculate Current Day
   const getCurrentDayNumber = useCallback(() => {
@@ -95,53 +113,28 @@ export const useEliteVelocity = () => {
       const now = new Date();
       const currentHour = now.getHours();
       const currentMin = now.getMinutes();
-      const nowInMins = currentHour * 60 + currentMin;
 
       const [startH, startM] = currentProfile.startHour.split(':').map(Number);
-      const startEatingInMins = startH * 60 + startM;
       
       const protocol = FASTING_PROTOCOLS[currentProfile.protocol];
       if (!protocol) return;
 
-      const eatingWindowMins = protocol.eat * 60;
-      const endEatingInMins = (startEatingInMins + eatingWindowMins) % (24 * 60);
-
-      // Simple logic for window crossing midnight
-      // This is a simplified version. A robust version needs full Date objects.
-      
-      // Let's use full Date objects for accuracy
       const eatingStart = new Date();
       eatingStart.setHours(startH, startM, 0, 0);
       
       const eatingEnd = new Date(eatingStart);
       eatingEnd.setHours(eatingStart.getHours() + protocol.eat);
 
-      // If eating window ends tomorrow (e.g. starts 20:00, 8h window -> ends 04:00)
-      // We need to handle the "current time" relative to these windows.
-      
-      // Simplified State Logic:
-      // Are we inside the eating window?
-      // If now is between start and end.
-      
-      // We need to find the *relevant* window for "now".
-      // The window could be from yesterday's cycle, today's cycle, or tomorrow's.
-      
-      // Let's assume the cycle is anchored to the startHour of the current day.
-      
       let isEating = false;
       let targetTime = new Date();
 
-      // Check today's window
       if (now >= eatingStart && now < eatingEnd) {
         isEating = true;
         targetTime = eatingEnd;
       } else {
-        // We are fasting.
-        // Are we before today's window?
         if (now < eatingStart) {
            targetTime = eatingStart;
         } else {
-           // We are after today's window, waiting for tomorrow's start
            targetTime = new Date(eatingStart);
            targetTime.setDate(targetTime.getDate() + 1);
         }
@@ -172,7 +165,11 @@ export const useEliteVelocity = () => {
       completed: true,
       weight: weight,
       water: 0, // Default
-      maxSpeed: maxSpeed
+      maxSpeed: maxSpeed,
+      protein: 0,
+      workoutCompleted: false,
+      waterCompleted: false,
+      proteinCompleted: false
     };
 
     const updatedLogs = {
@@ -189,10 +186,9 @@ export const useEliteVelocity = () => {
     }
 
     // Consistency 7
-    // Check last 7 days
     let streak = 0;
     for (let i = dayNum; i > dayNum - 7; i--) {
-      if (i === dayNum) streak++; // Current day is being completed
+      if (i === dayNum) streak++;
       else if (updatedLogs[i]?.completed) streak++;
     }
     if (streak >= 7 && !newBadges.includes('consistency_7')) {
@@ -207,7 +203,7 @@ export const useEliteVelocity = () => {
     updateProfileData({
       dailyLogs: updatedLogs,
       badges: newBadges,
-      weight: weight ? weight.toString() : currentProfile.weight // Update current weight
+      weight: weight ? weight.toString() : currentProfile.weight
     });
 
   }, [currentProfile, updateProfileData]);
@@ -226,7 +222,6 @@ export const useEliteVelocity = () => {
       maxSpeed: undefined
     };
 
-    // Auto-complete water mission if target reached (weight / 30 * 1000)
     const weight = parseFloat(currentProfile.weight);
     const target = Math.round((weight / 30) * 1000);
     const isGoalReached = amount >= target;
@@ -261,7 +256,6 @@ export const useEliteVelocity = () => {
       maxSpeed: undefined
     };
 
-    // Calculate dynamic target
     const target = calculateProteinTarget(currentProfile);
     const isGoalReached = amount >= target;
 

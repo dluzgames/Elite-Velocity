@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useEliteVelocity } from '@/hooks/useEliteVelocity';
+import { useAuth } from '@/hooks/useAuth';
 import Onboarding from '@/components/Onboarding';
 import ProfileScreen from '@/components/ProfileScreen';
 import NutritionModule from '@/components/dashboard/NutritionModule';
@@ -13,11 +14,13 @@ import ProgressionSummaryModule from '@/components/dashboard/ProgressionSummaryM
 import SpreadsheetView from '@/components/spreadsheet/SpreadsheetView';
 import Metrics from '@/components/history/Metrics';
 import FryaChat, { FryaChatRef } from '@/components/chat/FryaChat';
+import AuthScreen from '@/components/auth/AuthScreen';
 import { motion, AnimatePresence } from 'motion/react';
-import { LayoutDashboard, Table, Activity, Users, Trophy } from 'lucide-react';
+import { LayoutDashboard, Table, Activity, Users, LogOut } from 'lucide-react';
 import { BADGES } from '@/utils/constants';
 
 export default function Home() {
+  const { user, loading: authLoading, login, signup, logout } = useAuth();
   const {
     profiles,
     currentProfile,
@@ -34,37 +37,55 @@ export default function Home() {
     toggleWorkoutStatus,
     updateExerciseNote,
     updateDistanceRun
-  } = useEliteVelocity();
+  } = useEliteVelocity(user?.id);
 
   const [dashboardTab, setDashboardTab] = useState<'panel' | 'sheet' | 'history'>('panel');
   const fryaChatRef = React.useRef<FryaChatRef>(null);
 
-  // Loading Screen
+  if (authLoading) {
+    return null; // Removed opening/loading screen
+  }
+
+  if (!user) {
+    return <AuthScreen onLogin={login} onSignup={signup} />;
+  }
+
   if (viewMode === 'loading') {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <motion.h1 
-          animate={{ opacity: [0.2, 1, 0.2] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-          className="text-[#00FF80] font-black tracking-widest text-xl"
-        >
-          INICIALIZANDO FRYA CORE...
-        </motion.h1>
-      </div>
-    );
+    return null; // Removed opening/loading screen
   }
 
   // Profiles Screen
   if (viewMode === 'profiles') {
     return (
-      <ProfileScreen 
-        profiles={profiles}
-        onSelectProfile={(id) => {
-          setCurrentProfileId(id);
-          setViewMode('dashboard');
-        }}
-        onNewProfile={() => setViewMode('onboarding')}
-      />
+      <div className="min-h-screen bg-black">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center border-b border-zinc-800/50">
+          <div className="flex items-center gap-2">
+            <Activity className="text-[#00FF80]" size={20} />
+            <span className="font-black tracking-tighter text-white">FRYA CORE</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden sm:block">
+              <p className="text-white font-bold text-sm">{user.name}</p>
+              <p className="text-zinc-500 text-xs">{user.email}</p>
+            </div>
+            <button 
+              onClick={logout}
+              className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-600 transition-colors"
+              title="Sair"
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
+        </div>
+        <ProfileScreen 
+          profiles={profiles}
+          onSelectProfile={(id) => {
+            setCurrentProfileId(id);
+            setViewMode('dashboard');
+          }}
+          onNewProfile={() => setViewMode('onboarding')}
+        />
+      </div>
     );
   }
 

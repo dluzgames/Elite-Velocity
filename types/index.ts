@@ -1,3 +1,10 @@
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+}
+
 export interface DailyLog {
   completed: boolean;
   weight?: number;
@@ -13,7 +20,8 @@ export interface DailyLog {
 }
 
 export interface Profile {
-  id: string; // Added ID for easier management
+  id: string;
+  userId?: string;
   studentName: string;
   weight: string;
   height: string;
@@ -21,10 +29,10 @@ export interface Profile {
   targetDistance: string;
   duration: string;
   fastingDays: number[];
-  protocol: string; // Fasting protocol
+  protocol: string;
   startHour: string;
   footballDays: number[];
-  workoutProtocol: string; // Added to separate from fasting protocol
+  workoutProtocol: string;
   gender: 'm' | 'f';
   focuses: string[];
   startDate: string;
