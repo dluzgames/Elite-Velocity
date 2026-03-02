@@ -26,10 +26,14 @@ export default function DailyMissions({ profile, dayNum, onToggleWorkout, onUpda
 
   const [weightInput, setWeightInput] = React.useState<string>(log.weight ? log.weight.toString() : '');
 
-  // Sync local state if external weight changes (e.g. day change)
+  // Sync local state when dayNum changes or if log.weight changes externally (not from this component's typing)
   React.useEffect(() => {
-    setWeightInput(log.weight ? log.weight.toString() : '');
-  }, [log.weight, dayNum]);
+    const currentWeightStr = log.weight ? log.weight.toString() : '';
+    // Only update if the value is actually different and doesn't end in a dot (to avoid interrupting typing)
+    if (currentWeightStr !== weightInput && !weightInput.endsWith('.') && !weightInput.endsWith(',')) {
+      setWeightInput(currentWeightStr);
+    }
+  }, [log.weight, dayNum, weightInput]);
 
   const weight = parseFloat(profile.weight);
   
@@ -190,12 +194,13 @@ export default function DailyMissions({ profile, dayNum, onToggleWorkout, onUpda
                inputMode="decimal"
                value={weightInput} 
                onChange={(e) => {
-                 const val = e.target.value.replace(',', '.');
-                 // Allow numbers and one decimal point
-                 if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                   setWeightInput(val);
-                   const parsed = parseFloat(val);
-                   if (!isNaN(parsed)) {
+                 const originalVal = e.target.value;
+                 const normalizedVal = originalVal.replace(',', '.');
+                 // Allow numbers and one decimal separator (dot or comma)
+                 if (originalVal === '' || /^\d*([.,]\d*)?$/.test(originalVal)) {
+                   setWeightInput(originalVal);
+                   const parsed = parseFloat(normalizedVal);
+                   if (!isNaN(parsed) && !normalizedVal.endsWith('.')) {
                      onUpdateWeight(parsed);
                    }
                  }

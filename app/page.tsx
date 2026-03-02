@@ -36,7 +36,8 @@ export default function Home() {
     updateProteinIntake,
     toggleWorkoutStatus,
     updateExerciseNote,
-    updateDistanceRun
+    updateDistanceRun,
+    updateWeight
   } = useEliteVelocity(user?.id);
 
   const [dashboardTab, setDashboardTab] = useState<'panel' | 'sheet' | 'history'>('panel');
