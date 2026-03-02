@@ -17,10 +17,7 @@ export const useEliteVelocity = (userId?: string) => {
 
   // Load data on mount or when userId changes
   useEffect(() => {
-    if (!userId) {
-      setViewMode('loading');
-      return;
-    }
+    if (!userId) return;
 
     const storageKey = `elite_tracker_profiles_${userId}`;
     const stored = localStorage.getItem(storageKey);
@@ -36,6 +33,7 @@ export const useEliteVelocity = (userId?: string) => {
     if (dataToLoad) {
       try {
         const parsed = JSON.parse(dataToLoad);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setProfiles(parsed);
         if (Object.keys(parsed).length === 0) {
           setViewMode('onboarding');
@@ -161,15 +159,22 @@ export const useEliteVelocity = (userId?: string) => {
   const markDayComplete = useCallback((dayNum: number, weight?: number, maxSpeed?: number) => {
     if (!currentProfile) return;
     
-    const newLog: DailyLog = {
-      completed: true,
-      weight: weight,
-      water: 0, // Default
-      maxSpeed: maxSpeed,
+    const currentLog = currentProfile.dailyLogs[dayNum] || {
+      completed: false,
+      water: 0,
       protein: 0,
       workoutCompleted: false,
       waterCompleted: false,
-      proteinCompleted: false
+      proteinCompleted: false,
+      weight: undefined,
+      maxSpeed: undefined
+    };
+
+    const newLog: DailyLog = {
+      ...currentLog,
+      completed: true,
+      weight: weight !== undefined ? weight : currentLog.weight,
+      maxSpeed: maxSpeed !== undefined ? maxSpeed : currentLog.maxSpeed
     };
 
     const updatedLogs = {
@@ -203,9 +208,39 @@ export const useEliteVelocity = (userId?: string) => {
     updateProfileData({
       dailyLogs: updatedLogs,
       badges: newBadges,
-      weight: weight ? weight.toString() : currentProfile.weight
+      weight: weight ? weight.toString() : (currentLog.weight ? currentLog.weight.toString() : currentProfile.weight)
     });
 
+  }, [currentProfile, updateProfileData]);
+
+  const updateWeight = useCallback((dayNum: number, weight: number) => {
+    if (!currentProfile) return;
+
+    const currentLog = currentProfile.dailyLogs[dayNum] || {
+      completed: false,
+      water: 0,
+      protein: 0,
+      workoutCompleted: false,
+      waterCompleted: false,
+      proteinCompleted: false,
+      weight: undefined,
+      maxSpeed: undefined
+    };
+
+    const updatedLog = {
+      ...currentLog,
+      weight: weight
+    };
+
+    const updatedLogs = {
+      ...currentProfile.dailyLogs,
+      [dayNum]: updatedLog
+    };
+
+    updateProfileData({
+      dailyLogs: updatedLogs,
+      weight: weight.toString()
+    });
   }, [currentProfile, updateProfileData]);
 
   const updateWaterIntake = useCallback((dayNum: number, amount: number) => {
@@ -387,6 +422,7 @@ export const useEliteVelocity = (userId?: string) => {
     updateProteinIntake,
     toggleWorkoutStatus,
     updateExerciseNote,
-    updateDistanceRun
+    updateDistanceRun,
+    updateWeight
   };
 };

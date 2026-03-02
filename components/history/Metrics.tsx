@@ -12,6 +12,21 @@ interface MetricsProps {
   onDelete: () => void;
 }
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-[#151619] border border-zinc-800 p-3 rounded-lg shadow-xl">
+        <p className="text-zinc-400 text-xs font-bold uppercase mb-1">Dia {label}</p>
+        <p className="text-[#00FF80] font-mono font-bold text-lg">
+          {payload[0].value}kg
+        </p>
+        <p className="text-zinc-500 text-[10px] mt-1 uppercase tracking-wider">Clique para detalhes</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function Metrics({ profile, onDelete }: MetricsProps) {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
@@ -40,21 +55,6 @@ export default function Metrics({ profile, onDelete }: MetricsProps) {
 
   const startDate = useMemo(() => new Date(profile.startDate), [profile.startDate]);
   const today = startOfDay(new Date());
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-[#151619] border border-zinc-800 p-3 rounded-lg shadow-xl">
-          <p className="text-zinc-400 text-xs font-bold uppercase mb-1">Dia {label}</p>
-          <p className="text-[#00FF80] font-mono font-bold text-lg">
-            {payload[0].value}kg
-          </p>
-          <p className="text-zinc-500 text-[10px] mt-1 uppercase tracking-wider">Clique para detalhes</p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   const selectedLog = selectedDay ? profile.dailyLogs[selectedDay] : null;
 

@@ -228,6 +228,8 @@ export default function Home() {
                     dayNum={currentDayNumber}
                     onToggleWorkout={(status) => toggleWorkoutStatus(currentDayNumber, status)}
                     onUpdateProtein={(amount) => updateProteinIntake(currentDayNumber, amount)}
+                    onUpdateWeight={(amount) => updateWeight(currentDayNumber, amount)}
+                    onCompleteDay={() => markDayComplete(currentDayNumber)}
                   />
                   
                   <div className="glass-panel rounded-2xl p-6">

@@ -10,8 +10,6 @@ interface RunningProgressModuleProps {
 }
 
 export default function RunningProgressModule({ profile, currentDay, onUpdateDistance }: RunningProgressModuleProps) {
-  const [todaysDistance, setTodaysDistance] = useState<string>('');
-
   // Calculate total distance run so far
   const totalDistanceRun = Object.values(profile.dailyLogs).reduce((acc, log) => {
     return acc + (log.distanceRun || 0);
@@ -25,11 +23,7 @@ export default function RunningProgressModule({ profile, currentDay, onUpdateDis
   const todayLog = profile.dailyLogs[currentDay];
   const todayLoggedDistance = todayLog?.distanceRun || 0;
 
-  useEffect(() => {
-    if (todayLoggedDistance > 0) {
-      setTodaysDistance(todayLoggedDistance.toString());
-    }
-  }, [todayLoggedDistance]);
+  const [todaysDistance, setTodaysDistance] = useState<string>(todayLoggedDistance > 0 ? todayLoggedDistance.toString() : '');
 
   const handleUpdate = () => {
     const dist = parseFloat(todaysDistance);

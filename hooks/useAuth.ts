@@ -9,6 +9,7 @@ export const useAuth = () => {
     const storedUser = localStorage.getItem('elite_tracker_current_user');
     if (storedUser) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUser(JSON.parse(storedUser));
       } catch (e) {
         console.error("Failed to parse user", e);
