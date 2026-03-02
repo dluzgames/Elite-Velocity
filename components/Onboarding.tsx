@@ -146,6 +146,7 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                   <InputCst 
                     label="PESO ATUAL (KG)" 
                     type="number" 
+                    step="0.1"
                     value={formData.weight}
                     onChange={e => updateField('weight', e.target.value)}
                   />
@@ -153,6 +154,7 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                 <InputCst 
                   label="ALTURA (CM)" 
                   type="number" 
+                  step="0.1"
                   value={formData.height}
                   onChange={e => updateField('height', e.target.value)}
                 />
@@ -184,6 +186,7 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                   <InputCst 
                     label="META DE GORDURA (KG)" 
                     type="number" 
+                    step="0.1"
                     placeholder="Ex: 5"
                     value={formData.targetLostWeight}
                     onChange={e => updateField('targetLostWeight', e.target.value)}
@@ -220,6 +223,7 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                      <InputCst 
                      label="DISTÂNCIA ALVO (KM)" 
                      type="number" 
+                     step="0.1"
                      placeholder="Ex: 5"
                      value={formData.targetDistance}
                      onChange={e => updateField('targetDistance', e.target.value)}

@@ -214,7 +214,7 @@ export const useEliteVelocity = (userId?: string) => {
   }, [currentProfile, updateProfileData]);
 
   const updateWeight = useCallback((dayNum: number, weight: number) => {
-    if (!currentProfile) return;
+    if (!currentProfile || isNaN(weight)) return;
 
     const currentLog = currentProfile.dailyLogs[dayNum] || {
       completed: false,

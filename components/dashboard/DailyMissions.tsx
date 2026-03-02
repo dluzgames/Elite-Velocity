@@ -24,6 +24,13 @@ export default function DailyMissions({ profile, dayNum, onToggleWorkout, onUpda
     weight: undefined
   };
 
+  const [weightInput, setWeightInput] = React.useState<string>(log.weight ? log.weight.toString() : '');
+
+  // Sync local state if external weight changes (e.g. day change)
+  React.useEffect(() => {
+    setWeightInput(log.weight ? log.weight.toString() : '');
+  }, [log.weight, dayNum]);
+
   const weight = parseFloat(profile.weight);
   
   // Targets
@@ -179,10 +186,20 @@ export default function DailyMissions({ profile, dayNum, onToggleWorkout, onUpda
           {/* Weight Input */}
           <div className="flex items-center gap-2">
              <input 
-               type="number" 
-               step="0.1"
-               value={log.weight || ''} 
-               onChange={(e) => onUpdateWeight(parseFloat(e.target.value))}
+               type="text" 
+               inputMode="decimal"
+               value={weightInput} 
+               onChange={(e) => {
+                 const val = e.target.value.replace(',', '.');
+                 // Allow numbers and one decimal point
+                 if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                   setWeightInput(val);
+                   const parsed = parseFloat(val);
+                   if (!isNaN(parsed)) {
+                     onUpdateWeight(parsed);
+                   }
+                 }
+               }}
                placeholder="0.0"
                className="flex-1 bg-zinc-800 rounded-lg p-2 text-white font-mono text-center focus:outline-none focus:ring-1 focus:ring-[#00FF80]"
              />
