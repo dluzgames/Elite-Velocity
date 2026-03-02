@@ -61,7 +61,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center border-b border-zinc-800/50">
           <div className="flex items-center gap-2">
             <Activity className="text-[#00FF80]" size={20} />
-            <span className="font-black tracking-tighter text-white">FRYA CORE</span>
+            <span className="font-black tracking-tighter text-white">DLUZ ELITE FIT</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">

@@ -47,7 +47,7 @@ export default function AuthScreen({ onLogin, onSignup }: AuthScreenProps) {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 mb-6 shadow-[0_0_30px_rgba(0,255,128,0.1)]">
             <Activity size={32} className="text-[#00FF80]" />
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tighter mb-2">FRYA CORE</h1>
+          <h1 className="text-3xl font-black text-white tracking-tighter mb-2">DLUZ ELITE FIT</h1>
           <p className="text-zinc-500 text-sm font-mono uppercase tracking-widest">Sistema de Alta Performance</p>
         </div>
 
