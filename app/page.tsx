@@ -15,8 +15,10 @@ import SpreadsheetView from '@/components/spreadsheet/SpreadsheetView';
 import Metrics from '@/components/history/Metrics';
 import FryaChat, { FryaChatRef } from '@/components/chat/FryaChat';
 import AuthScreen from '@/components/auth/AuthScreen';
+import EditGoalsModal from '@/components/dashboard/EditGoalsModal';
+import ProtocolView from '@/components/dashboard/ProtocolView';
 import { motion, AnimatePresence } from 'motion/react';
-import { LayoutDashboard, Table, Activity, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Table, Activity, Users, LogOut, Settings, FileText } from 'lucide-react';
 import { BADGES } from '@/utils/constants';
 
 export default function Home() {
@@ -37,11 +39,24 @@ export default function Home() {
     toggleWorkoutStatus,
     updateExerciseNote,
     updateDistanceRun,
-    updateWeight
+    updateWeight,
+    updateMaxSpeed,
+    resetDay,
+    updateProfileData
   } = useEliteVelocity(user?.id);
 
-  const [dashboardTab, setDashboardTab] = useState<'panel' | 'sheet' | 'history'>('panel');
+  const [dashboardTab, setDashboardTab] = useState<'panel' | 'sheet' | 'history' | 'protocol'>('panel');
+  const [isEditGoalsOpen, setIsEditGoalsOpen] = useState(false);
   const fryaChatRef = React.useRef<FryaChatRef>(null);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   if (authLoading) {
     return null; // Removed opening/loading screen
@@ -118,14 +133,23 @@ export default function Home() {
       <div className="min-h-screen bg-[#0A0A0A] text-white p-4 md:p-8 pb-24">
         {/* Header */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div>
-            <button 
-              onClick={() => setViewMode('profiles')}
-              className="flex items-center gap-2 text-zinc-500 hover:text-white mb-2 text-xs font-bold uppercase tracking-widest"
-            >
-              <Users size={14} />
-              Trocar Agente
-            </button>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setViewMode('profiles')}
+                className="flex items-center gap-2 text-zinc-500 hover:text-white text-xs font-bold uppercase tracking-widest"
+              >
+                <Users size={14} />
+                Trocar Agente
+              </button>
+              <button 
+                onClick={() => setIsEditGoalsOpen(true)}
+                className="flex items-center gap-2 text-zinc-500 hover:text-[#00FF80] text-xs font-bold uppercase tracking-widest transition-colors"
+              >
+                <Settings size={14} />
+                Editar Metas
+              </button>
+            </div>
             <h1 className="text-3xl md:text-4xl font-black tracking-tighter text-white">
               DIA <span className="text-[#00FF80]">{currentDayNumber}</span> <span className="text-zinc-600">/ {currentProfile.duration}</span>
             </h1>
@@ -170,6 +194,15 @@ export default function Home() {
             >
               <Activity size={16} />
               <span className="hidden md:inline">Progresso</span>
+            </button>
+            <button 
+              onClick={() => setDashboardTab('protocol')}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-all ${
+                dashboardTab === 'protocol' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              <FileText size={16} />
+              <span className="hidden md:inline">Protocolo</span>
             </button>
           </div>
         </header>
@@ -230,7 +263,9 @@ export default function Home() {
                     onToggleWorkout={(status) => toggleWorkoutStatus(currentDayNumber, status)}
                     onUpdateProtein={(amount) => updateProteinIntake(currentDayNumber, amount)}
                     onUpdateWeight={(amount) => updateWeight(currentDayNumber, amount)}
+                    onUpdateMaxSpeed={(amount) => updateMaxSpeed(currentDayNumber, amount)}
                     onCompleteDay={() => markDayComplete(currentDayNumber)}
+                    onResetDay={() => resetDay(currentDayNumber)}
                   />
                   
                   <div className="glass-panel rounded-2xl p-6">
@@ -290,9 +325,27 @@ export default function Home() {
               <Metrics profile={currentProfile} onDelete={deleteProfile} />
             </motion.div>
           )}
+
+          {dashboardTab === 'protocol' && (
+            <motion.div 
+              key="protocol"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <ProtocolView profile={currentProfile} />
+            </motion.div>
+          )}
         </AnimatePresence>
 
         <FryaChat ref={fryaChatRef} profile={currentProfile} currentDay={currentDayNumber} />
+        
+        <EditGoalsModal 
+          profile={currentProfile}
+          isOpen={isEditGoalsOpen}
+          onClose={() => setIsEditGoalsOpen(false)}
+          onSave={updateProfileData}
+        />
       </div>
     );
   }

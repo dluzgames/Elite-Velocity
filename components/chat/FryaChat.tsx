@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send, Sparkles } from 'lucide-react';
 import { Profile } from '@/types';
+import { WORKOUT_PROTOCOLS } from '@/utils/constants';
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 
 export interface FryaChatRef {
@@ -61,6 +62,7 @@ export default function FryaChat({ profile, currentDay, ref }: FryaChatProps) {
       const completedDays = Object.values(profile.dailyLogs).filter(l => l.completed).length;
       const daysPassed = Math.max(currentDay - 1, 1);
       const consistency = Math.round((completedDays / daysPassed) * 100);
+      const workoutProtocolLabel = WORKOUT_PROTOCOLS.find(p => p.id === profile.workoutProtocol)?.label || profile.workoutProtocol;
       
       // Recent History (Last 7 days)
       const recentLogs = [];
@@ -80,7 +82,7 @@ export default function FryaChat({ profile, currentDay, ref }: FryaChatProps) {
         Meta: Perder ${profile.targetLostWeight}kg
         Focos: ${profile.focuses.join(', ')}
         Protocolo Jejum: ${profile.protocol}
-        Protocolo Treino: ${profile.workoutProtocol}
+        Protocolo Treino: ${workoutProtocolLabel}
         
         STATUS DA MISSÃO:
         Dia Atual: ${currentDay} de ${profile.duration}

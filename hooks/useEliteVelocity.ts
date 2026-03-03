@@ -1,13 +1,49 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Profile, ViewMode, DailyLog } from '@/types';
-import { FASTING_PROTOCOLS, BADGES } from '@/utils/constants';
+import { FASTING_PROTOCOLS } from '@/utils/constants';
 import { differenceInDays, startOfDay } from 'date-fns';
 import { calculateProteinTarget } from '@/utils/nutrition-logic';
 
+const PROFILES_STORAGE_KEY = 'elite_velocity_profiles';
+
 export const useEliteVelocity = (userId?: string) => {
-  const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [profiles, setProfiles] = useState<Record<string, Profile>>(() => {
+    if (typeof window !== 'undefined' && userId) {
+      const savedProfiles = localStorage.getItem(PROFILES_STORAGE_KEY);
+      if (savedProfiles) {
+        try {
+          const allProfiles = JSON.parse(savedProfiles);
+          const userProfiles: Record<string, Profile> = {};
+          Object.keys(allProfiles).forEach(id => {
+            if (allProfiles[id].userId === userId) {
+              userProfiles[id] = allProfiles[id];
+            }
+          });
+          return userProfiles;
+        } catch (e) {
+          console.error("Error parsing saved profiles", e);
+        }
+      }
+    }
+    return {};
+  });
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('loading');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window !== 'undefined' && userId) {
+      const savedProfiles = localStorage.getItem(PROFILES_STORAGE_KEY);
+      if (savedProfiles) {
+        try {
+          const allProfiles = JSON.parse(savedProfiles);
+          const hasProfiles = Object.values(allProfiles).some((p: any) => p.userId === userId);
+          return hasProfiles ? 'profiles' : 'onboarding';
+        } catch (e) {
+          return 'onboarding';
+        }
+      }
+      return 'onboarding';
+    }
+    return 'loading';
+  });
   const [fastingStatus, setFastingStatus] = useState({
     state: 'CARREGANDO',
     hoursLeft: 0,
@@ -15,79 +51,88 @@ export const useEliteVelocity = (userId?: string) => {
     isFasting: false
   });
 
-  // Load data on mount or when userId changes
+  // Sync profiles when userId changes
   useEffect(() => {
-    if (!userId) return;
-
-    const storageKey = `elite_tracker_profiles_${userId}`;
-    const stored = localStorage.getItem(storageKey);
-    
-    // Migration logic: if user specific storage doesn't exist, check old storage
-    const oldStored = localStorage.getItem('elite_tracker_profiles');
-    if (!stored && oldStored) {
-      localStorage.setItem(storageKey, oldStored);
+    if (!userId) {
+      setProfiles({});
+      setViewMode('loading');
+      return;
     }
 
-    const dataToLoad = stored || (oldStored && !stored ? oldStored : null);
-
-    if (dataToLoad) {
+    const savedProfiles = localStorage.getItem(PROFILES_STORAGE_KEY);
+    if (savedProfiles) {
       try {
-        const parsed = JSON.parse(dataToLoad);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setProfiles(parsed);
-        if (Object.keys(parsed).length === 0) {
-          setViewMode('onboarding');
-        } else {
-          setViewMode('profiles');
-        }
+        const allProfiles = JSON.parse(savedProfiles);
+        const userProfiles: Record<string, Profile> = {};
+        Object.keys(allProfiles).forEach(id => {
+          if (allProfiles[id].userId === userId) {
+            userProfiles[id] = allProfiles[id];
+          }
+        });
+        
+        setProfiles(userProfiles);
+        setViewMode(Object.keys(userProfiles).length === 0 ? 'onboarding' : 'profiles');
       } catch (e) {
-        console.error("Failed to parse profiles", e);
+        setProfiles({});
         setViewMode('onboarding');
       }
     } else {
+      setProfiles({});
       setViewMode('onboarding');
     }
   }, [userId]);
 
   const currentProfile = currentProfileId ? profiles[currentProfileId] : null;
 
-  const saveProfile = useCallback((profile: Profile) => {
+  const saveProfile = useCallback(async (profile: Profile) => {
     if (!userId) return;
-    const storageKey = `elite_tracker_profiles_${userId}`;
     
     const profileWithUser = { ...profile, userId };
     
     setProfiles(prev => {
-      const next = { ...prev, [profileWithUser.id]: profileWithUser };
-      localStorage.setItem(storageKey, JSON.stringify(next));
-      return next;
+      const updated = { ...prev, [profile.id]: profileWithUser };
+      
+      // Save all profiles to localStorage
+      const allProfiles = JSON.parse(localStorage.getItem(PROFILES_STORAGE_KEY) || '{}');
+      allProfiles[profile.id] = profileWithUser;
+      localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(allProfiles));
+      
+      return updated;
     });
   }, [userId]);
 
-  const updateProfileData = useCallback((partial: Partial<Profile>) => {
+  const updateProfileData = useCallback(async (partial: Partial<Profile>) => {
     if (!currentProfileId || !userId) return;
-    const storageKey = `elite_tracker_profiles_${userId}`;
 
     setProfiles(prev => {
-      const current = prev[currentProfileId];
-      if (!current) return prev;
-      const updated = { ...current, ...partial };
-      const next = { ...prev, [currentProfileId]: updated };
-      localStorage.setItem(storageKey, JSON.stringify(next));
-      return next;
+      if (!prev[currentProfileId]) return prev;
+      
+      const updatedProfile = { ...prev[currentProfileId], ...partial };
+      const updated = { ...prev, [currentProfileId]: updatedProfile };
+      
+      // Save all profiles to localStorage
+      const allProfiles = JSON.parse(localStorage.getItem(PROFILES_STORAGE_KEY) || '{}');
+      allProfiles[currentProfileId] = updatedProfile;
+      localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(allProfiles));
+      
+      return updated;
     });
   }, [currentProfileId, userId]);
 
-  const deleteProfile = useCallback(() => {
+  const deleteProfile = useCallback(async () => {
     if (!currentProfileId || !userId) return;
-    const storageKey = `elite_tracker_profiles_${userId}`;
 
     setProfiles(prev => {
-      const next = { ...prev };
-      delete next[currentProfileId];
-      localStorage.setItem(storageKey, JSON.stringify(next));
-      return next;
+      const { [currentProfileId]: removed, ...rest } = prev;
+      
+      // Save all profiles to localStorage
+      const allProfiles = JSON.parse(localStorage.getItem(PROFILES_STORAGE_KEY) || '{}');
+      delete allProfiles[currentProfileId];
+      localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(allProfiles));
+      
+      return rest;
     });
+    
     setCurrentProfileId(null);
     setViewMode('profiles');
   }, [currentProfileId, userId]);
@@ -109,9 +154,6 @@ export const useEliteVelocity = (userId?: string) => {
 
     const calculateFasting = () => {
       const now = new Date();
-      const currentHour = now.getHours();
-      const currentMin = now.getMinutes();
-
       const [startH, startM] = currentProfile.startHour.split(':').map(Number);
       
       const protocol = FASTING_PROTOCOLS[currentProfile.protocol];
@@ -170,11 +212,27 @@ export const useEliteVelocity = (userId?: string) => {
       maxSpeed: undefined
     };
 
+    let finalWeight = weight !== undefined ? weight : currentLog.weight;
+    if (finalWeight === undefined) {
+      if (dayNum > 1 && currentProfile.dailyLogs[dayNum - 1]?.weight !== undefined) {
+        finalWeight = currentProfile.dailyLogs[dayNum - 1].weight;
+      } else {
+        finalWeight = parseFloat(currentProfile.weight);
+      }
+    }
+
+    let finalMaxSpeed = maxSpeed !== undefined ? maxSpeed : currentLog.maxSpeed;
+    if (finalMaxSpeed === undefined) {
+      if (dayNum > 1 && currentProfile.dailyLogs[dayNum - 1]?.maxSpeed !== undefined) {
+        finalMaxSpeed = currentProfile.dailyLogs[dayNum - 1].maxSpeed;
+      }
+    }
+
     const newLog: DailyLog = {
       ...currentLog,
       completed: true,
-      weight: weight !== undefined ? weight : currentLog.weight,
-      maxSpeed: maxSpeed !== undefined ? maxSpeed : currentLog.maxSpeed
+      weight: finalWeight,
+      maxSpeed: finalMaxSpeed
     };
 
     const updatedLogs = {
@@ -201,14 +259,14 @@ export const useEliteVelocity = (userId?: string) => {
     }
 
     // Speed Demon
-    if (maxSpeed && maxSpeed >= 20 && !newBadges.includes('speed_demon')) {
+    if (finalMaxSpeed && finalMaxSpeed >= 20 && !newBadges.includes('speed_demon')) {
       newBadges.push('speed_demon');
     }
 
     updateProfileData({
       dailyLogs: updatedLogs,
       badges: newBadges,
-      weight: weight ? weight.toString() : (currentLog.weight ? currentLog.weight.toString() : currentProfile.weight)
+      weight: finalWeight ? finalWeight.toString() : currentProfile.weight
     });
 
   }, [currentProfile, updateProfileData]);
@@ -240,6 +298,35 @@ export const useEliteVelocity = (userId?: string) => {
     updateProfileData({
       dailyLogs: updatedLogs,
       weight: weight.toString()
+    });
+  }, [currentProfile, updateProfileData]);
+
+  const updateMaxSpeed = useCallback((dayNum: number, maxSpeed: number) => {
+    if (!currentProfile || isNaN(maxSpeed)) return;
+
+    const currentLog = currentProfile.dailyLogs[dayNum] || {
+      completed: false,
+      water: 0,
+      protein: 0,
+      workoutCompleted: false,
+      waterCompleted: false,
+      proteinCompleted: false,
+      weight: undefined,
+      maxSpeed: undefined
+    };
+
+    const updatedLog = {
+      ...currentLog,
+      maxSpeed: maxSpeed
+    };
+
+    const updatedLogs = {
+      ...currentProfile.dailyLogs,
+      [dayNum]: updatedLog
+    };
+
+    updateProfileData({
+      dailyLogs: updatedLogs
     });
   }, [currentProfile, updateProfileData]);
 
@@ -405,6 +492,17 @@ export const useEliteVelocity = (userId?: string) => {
     });
   }, [currentProfile, updateProfileData]);
 
+  const resetDay = useCallback((dayNum: number) => {
+    if (!currentProfile) return;
+
+    const updatedLogs = { ...currentProfile.dailyLogs };
+    delete updatedLogs[dayNum];
+
+    updateProfileData({
+      dailyLogs: updatedLogs
+    });
+  }, [currentProfile, updateProfileData]);
+
   return {
     profiles,
     currentProfile,
@@ -423,6 +521,8 @@ export const useEliteVelocity = (userId?: string) => {
     toggleWorkoutStatus,
     updateExerciseNote,
     updateDistanceRun,
-    updateWeight
+    updateWeight,
+    updateMaxSpeed,
+    resetDay
   };
 };

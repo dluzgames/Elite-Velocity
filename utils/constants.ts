@@ -27,7 +27,7 @@ export const WEEK_DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 export const DURATIONS = ['7', '14', '21', '28', '42', '60', '90'];
 
 export const WORKOUT_PROTOCOLS = [
-  'Musculação Clássica',
-  'Tabata HIIT (20s/10s)',
-  'Elite Resistance (Volume)'
+  { id: 'classic', label: 'Musculação Clássica', desc: 'Foco em hipertrofia e força base. Séries de 8-12 repetições com descanso moderado (60-90s).' },
+  { id: 'tabata', label: 'Tabata HIIT (20s/10s)', desc: 'Treino metabólico de alta intensidade. 20s de esforço máximo seguidos de 10s de descanso.' },
+  { id: 'resistance', label: 'Elite Resistance (Volume)', desc: 'Resistência muscular e condicionamento. Alto volume de repetições (15-20) com baixo tempo de descanso.' }
 ];

@@ -5,8 +5,9 @@ import { ptBR } from 'date-fns/locale';
 import { Profile } from '@/types';
 import { getWorkoutSplit, getCardioDetail } from '@/utils/workout-logic';
 import { calculateCaloriesTarget, calculateProteinTarget } from '@/utils/nutrition-logic';
-import { Check, X, Calendar, Dumbbell, Activity, ChevronRight } from 'lucide-react';
+import { Check, X, Calendar, Dumbbell, Activity, ChevronRight, FileText } from 'lucide-react';
 import WorkoutDetailsModal from '@/components/dashboard/WorkoutDetailsModal';
+import FullProtocolModal from '@/components/spreadsheet/FullProtocolModal';
 
 interface SpreadsheetViewProps {
   profile: Profile;
@@ -23,10 +24,11 @@ export default function SpreadsheetView({ profile, currentDay, onToggleDay, onAs
     name: string, 
     desc?: string, 
     exercises: string[], 
-    cardio: string,
+    cardio: { title: string; desc: string },
     isFasting: boolean,
     isCompleted: boolean
   } | null>(null);
+  const [isFullProtocolOpen, setIsFullProtocolOpen] = useState(false);
   
   // Memoize split to avoid recalculation on every render
   const split = useMemo(() => 
@@ -96,18 +98,27 @@ export default function SpreadsheetView({ profile, currentDay, onToggleDay, onAs
           </h2>
           <p className="text-zinc-500 text-sm font-mono">VISÃO GERAL DO PROTOCOLO</p>
         </div>
-        <div className="flex gap-4 text-xs font-bold uppercase tracking-widest">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#00FF80]" />
-            <span className="text-zinc-400">Concluído</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#FF4E00]" />
-            <span className="text-zinc-400">Jejum</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-white" />
-            <span className="text-zinc-400">Hoje</span>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setIsFullProtocolOpen(true)}
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-800 text-white text-xs font-bold uppercase hover:bg-zinc-700 transition-colors"
+          >
+            <FileText size={16} />
+            Ver Protocolo Completo
+          </button>
+          <div className="flex gap-4 text-xs font-bold uppercase tracking-widest">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#00FF80]" />
+              <span className="text-zinc-400">Concluído</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#FF4E00]" />
+              <span className="text-zinc-400">Jejum</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-white" />
+              <span className="text-zinc-400">Hoje</span>
+            </div>
           </div>
         </div>
       </div>
@@ -178,7 +189,7 @@ export default function SpreadsheetView({ profile, currentDay, onToggleDay, onAs
                 <td className="p-4 hidden md:table-cell">
                   <div className="flex items-center gap-2 text-sm text-zinc-400">
                     <Activity size={14} className="text-blue-500 shrink-0" />
-                    <span className="truncate max-w-xs">{row.cardio}</span>
+                    <span className="truncate max-w-xs">{row.cardio.title}</span>
                   </div>
                 </td>
                 <td className="p-4 text-center">
@@ -212,7 +223,7 @@ export default function SpreadsheetView({ profile, currentDay, onToggleDay, onAs
         workoutName={selectedWorkout?.name || ''}
         description={selectedWorkout?.desc || ''}
         exercises={selectedWorkout?.exercises || []}
-        cardio={selectedWorkout?.cardio || ''}
+        cardio={selectedWorkout?.cardio || { title: '', desc: '' }}
         isFasting={selectedWorkout?.isFasting || false}
         isCompleted={selectedWorkout?.isCompleted || false}
         caloriesTarget={caloriesTarget}
@@ -225,12 +236,19 @@ export default function SpreadsheetView({ profile, currentDay, onToggleDay, onAs
             
             Exercícios de Musculação: ${selectedWorkout.exercises.join(', ')}.
             
-            Protocolo de Cardio: ${selectedWorkout.cardio}.
+            Protocolo de Cardio: ${selectedWorkout.cardio.title}.
+            Detalhes do Cardio: ${selectedWorkout.cardio.desc}
             
             Me dê dicas de execução e estratégia para esse treino completo (musculação + cardio). Explique como encaixar o cardio (antes ou depois) e a intensidade ideal.`;
             onAskAI(prompt);
           }
         }}
+      />
+
+      <FullProtocolModal 
+        isOpen={isFullProtocolOpen}
+        onClose={() => setIsFullProtocolOpen(false)}
+        profile={profile}
       />
     </div>
   );

@@ -9,7 +9,7 @@ interface WorkoutDetailsModalProps {
   workoutName: string;
   description?: string;
   exercises: string[];
-  cardio: string;
+  cardio: { title: string; desc: string };
   isFasting: boolean;
   isCompleted: boolean;
   caloriesTarget: number;
@@ -132,14 +132,36 @@ export default function WorkoutDetailsModal({
                       ))}
                     </div>
 
-                    <div className="bg-[#FF4E00]/10 border border-[#FF4E00]/20 p-4 rounded-xl">
+                    <div className="bg-[#FF4E00]/10 border border-[#FF4E00]/20 p-4 rounded-xl mb-6">
                       <div className="flex items-center gap-2 mb-2 text-[#FF4E00]">
                         <Activity size={18} />
                         <span className="text-xs font-bold uppercase tracking-widest">Protocolo Cardio</span>
                       </div>
-                      <p className="text-zinc-200 text-sm font-medium leading-relaxed">
-                        {cardio}
+                      <h4 className="text-white text-sm font-bold mb-1">{cardio.title}</h4>
+                      <p className="text-zinc-400 text-xs leading-relaxed">
+                        {cardio.desc}
                       </p>
+                    </div>
+
+                    <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl">
+                      <div className="flex items-center gap-2 mb-2 text-zinc-500">
+                        <Sparkles size={16} />
+                        <span className="text-xs font-bold uppercase tracking-widest">Estratégia Tática</span>
+                      </div>
+                      <ul className="text-xs text-zinc-400 space-y-2">
+                        <li className="flex gap-2">
+                          <span className="text-[#00FF80]">•</span>
+                          Mantenha o descanso entre séries em 60-90 segundos.
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="text-[#00FF80]">•</span>
+                          Foco total na contração muscular (conexão mente-músculo).
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="text-[#00FF80]">•</span>
+                          Hidrate-se com 500ml de água durante este treino.
+                        </li>
+                      </ul>
                     </div>
                   </motion.div>
                 ) : (

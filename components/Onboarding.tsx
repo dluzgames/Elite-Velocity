@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { InputCst, SelectCst } from '@/components/ui/Inputs';
 import { FASTING_PROTOCOLS, FOCUS_OPTIONS, DURATIONS, WORKOUT_PROTOCOLS, WEEK_DAYS } from '@/utils/constants';
 import { Profile } from '@/types';
-import { generateOnboardingPDF } from '@/utils/exporters';
 import { v4 as uuidv4 } from 'uuid';
 
 interface OnboardingProps {
@@ -24,9 +23,8 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
     protocol: '12/12',
     startHour: '12:00',
     footballDays: [],
-    workoutProtocol: 'Musculação Clássica',
+    workoutProtocol: 'classic',
     focuses: [],
-    runDays: [],
     runDistances: {},
     dailyLogs: {},
     badges: [],
@@ -68,7 +66,6 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
       badges: []
     };
     
-    generateOnboardingPDF(profile);
     onFinish(profile);
   };
 
@@ -77,12 +74,12 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
     if (current.includes(id)) {
       updateField('focuses', current.filter(f => f !== id));
     } else {
-      if (current.length >= 2) return;
+      if (current.length >= 3) return;
       updateField('focuses', [...current, id]);
     }
   };
 
-  const toggleDay = (field: 'fastingDays' | 'footballDays' | 'runDays', dayIndex: number) => {
+  const toggleDay = (field: 'fastingDays' | 'footballDays', dayIndex: number) => {
     const current = formData[field] || [];
     if (current.includes(dayIndex)) {
       updateField(field, current.filter(d => d !== dayIndex));
@@ -164,7 +161,7 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
             {step === 2 && (
               <>
                 <div>
-                  <label className="text-xs font-bold text-zinc-400 uppercase mb-2 block">FOCOS TÁTICOS (MÁX 2)</label>
+                  <label className="text-xs font-bold text-zinc-400 uppercase mb-2 block">FOCOS TÁTICOS (MÁX 3)</label>
                   <div className="grid grid-cols-2 gap-2">
                     {FOCUS_OPTIONS.map(opt => (
                       <button
@@ -203,32 +200,17 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                   </div>
                 </div>
 
-                {/* Run Days & Distance - Fixed the bug where targetDistance wasn't settable */}
+                {/* Run Distance - Always show since it's a goal now, removed runDays selection */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase">DIAS DE CORRIDA</label>
-                  <div className="flex gap-1 justify-between">
-                    {WEEK_DAYS.map((d, i) => (
-                      <button
-                        key={i}
-                        onClick={() => toggleDay('runDays', i)}
-                        className={`w-10 h-10 rounded-full font-bold text-sm ${
-                          formData.runDays?.includes(i) ? 'bg-yellow-500 text-black' : 'bg-zinc-800 text-zinc-600'
-                        }`}
-                      >
-                        {d[0]}
-                      </button>
-                    ))}
-                  </div>
-                  {formData.runDays && formData.runDays.length > 0 && (
-                     <InputCst 
-                     label="DISTÂNCIA ALVO (KM)" 
-                     type="number" 
-                     step="0.1"
-                     placeholder="Ex: 5"
-                     value={formData.targetDistance}
-                     onChange={e => updateField('targetDistance', e.target.value)}
-                   />
-                  )}
+                  <InputCst 
+                    label="DISTÂNCIA ALVO (KM)" 
+                    type="number" 
+                    step="0.1"
+                    placeholder="Ex: 5"
+                    value={formData.targetDistance}
+                    onChange={e => updateField('targetDistance', e.target.value)}
+                  />
+                  <p className="text-[10px] text-zinc-600 uppercase font-bold">A meta de corrida será baseada na sua disponibilidade semanal.</p>
                 </div>
               </>
             )}
@@ -296,17 +278,26 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-zinc-400 uppercase">Protocolo de Treino</label>
-                    <select 
-                      className="bg-zinc-900/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00FF80]"
-                      value={formData.workoutProtocol}
-                      onChange={e => updateField('workoutProtocol', e.target.value)}
-                    >
+                    <div className="space-y-2">
                       {WORKOUT_PROTOCOLS.map(p => (
-                        <option key={p} value={p}>{p}</option>
+                        <button
+                          key={p.id}
+                          onClick={() => updateField('workoutProtocol', p.id)}
+                          className={`w-full text-left p-4 rounded-xl border transition-all ${
+                            formData.workoutProtocol === p.id 
+                              ? 'bg-[#00FF80]/10 border-[#00FF80] text-[#00FF80]' 
+                              : 'bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                          }`}
+                        >
+                          <div className="font-bold mb-1">{p.label}</div>
+                          <div className={`text-xs ${formData.workoutProtocol === p.id ? 'text-[#00FF80]/80' : 'text-zinc-500'}`}>
+                            {p.desc}
+                          </div>
+                        </button>
                       ))}
-                    </select>
+                    </div>
                   </div>
                 </div>
               </>

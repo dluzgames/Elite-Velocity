@@ -2,8 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Profile } from '@/types';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
-import { Download, Trash2, X, Scale, Droplets, Dumbbell, StickyNote, Check, Footprints, Calendar } from 'lucide-react';
-import { generateExcel } from '@/utils/exporters';
+import { Trash2, X, Scale, Droplets, Dumbbell, StickyNote, Check, Footprints, Calendar } from 'lucide-react';
 import { getWorkoutSplit } from '@/utils/workout-logic';
 import { addDays, isBefore, startOfDay } from 'date-fns';
 
@@ -203,14 +202,47 @@ export default function Metrics({ profile, onDelete }: MetricsProps) {
         </div>
       </motion.div>
 
+      {/* Detailed Summary Section */}
+      <motion.div 
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-6"
+      >
+        <div className="glass-panel p-6 rounded-2xl border border-zinc-800">
+          <h4 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-4">Volume de Corrida</h4>
+          <div className="flex items-end gap-2">
+            <span className="text-3xl font-black text-white">
+              {Object.values(profile.dailyLogs).reduce((acc, log) => acc + (log.distanceRun || 0), 0).toFixed(1)}
+            </span>
+            <span className="text-zinc-500 mb-1 font-mono text-xs">KM TOTAIS</span>
+          </div>
+        </div>
+
+        <div className="glass-panel p-6 rounded-2xl border border-zinc-800">
+          <h4 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-4">Hidratação Acumulada</h4>
+          <div className="flex items-end gap-2">
+            <span className="text-3xl font-black text-white">
+              {(Object.values(profile.dailyLogs).reduce((acc, log) => acc + (log.water || 0), 0) / 1000).toFixed(1)}
+            </span>
+            <span className="text-zinc-500 mb-1 font-mono text-xs">LITROS</span>
+          </div>
+        </div>
+
+        <div className="glass-panel p-6 rounded-2xl border border-zinc-800">
+          <h4 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-4">Média de Proteína</h4>
+          <div className="flex items-end gap-2">
+            <span className="text-3xl font-black text-white">
+              {completedDays > 0 
+                ? Math.round(Object.values(profile.dailyLogs).reduce((acc, log) => acc + (log.protein || 0), 0) / completedDays)
+                : 0}
+            </span>
+            <span className="text-zinc-500 mb-1 font-mono text-xs">G / DIA</span>
+          </div>
+        </div>
+      </motion.div>
+
       <div className="flex gap-4 justify-end">
-        <button 
-          onClick={() => generateExcel(profile)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600/20 text-blue-500 border border-blue-600/50 hover:bg-blue-600/30 transition-colors"
-        >
-          <Download size={18} />
-          Exportar Planilha
-        </button>
         <button 
           onClick={() => {
             if (confirm("Tem certeza que deseja apagar este agente? A ação é irreversível.")) {

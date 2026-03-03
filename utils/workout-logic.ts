@@ -12,6 +12,8 @@ export const getWorkoutSplit = (gender: 'm' | 'f', focuses: string[], workoutPro
 
   const isLowerFocus = gender === 'f' || focuses.includes('inf');
   const isUpperFocus = focuses.includes('sup');
+  const isHiit = workoutProtocol === 'tabata';
+  const isVolume = workoutProtocol === 'resistance';
 
   // Common exercises
   const warmUp = "Aquecimento Geral (5-10min)";
@@ -118,31 +120,77 @@ export const getWorkoutSplit = (gender: 'm' | 'f', focuses: string[], workoutPro
 };
 
 export const getCardioDetail = (
-  dayWeek: number, // 0-6
+  dayWeek: number, // 0-6 (0 is Sunday)
   dayNum: number,
   focuses: string[],
   footballDays: number[],
   runDays: number[],
   runDistances: Record<number, string>
-): string => {
+): { title: string; desc: string } => {
+  if (dayWeek === 0) {
+    return { 
+      title: "🧘 OFF: Descanso Tático", 
+      desc: "Recuperação total dos tecidos. Foco em sono, hidratação e mobilidade leve." 
+    };
+  }
+
   if (footballDays.includes(dayWeek)) {
-    return "⚽ Aquecimento funcional + Treino Coletivo";
+    return { 
+      title: "⚽ Treino Coletivo / Futebol", 
+      desc: "Aquecimento funcional (15min) + Jogo. Foco em agilidade e explosão lateral." 
+    };
   }
 
-  if (runDays.includes(dayWeek)) {
-    const dist = runDistances[dayWeek] || '5';
-    return `🏃 Meta de ${dist}km em ritmo constante`;
-  }
-
-  if (dayWeek === 0) { // Sunday
-    return "🧘 OFF: Descanso total para supercompensação";
-  }
-
+  // If user has "velocidade" focus, we use a specific 5km speed cycle
   if (focuses.includes('vel')) {
-    return "⚡ 6x40m Sprints + 4xPliometria";
+    const cycleDay = dayNum % 6; // Cycle through 6 types of workouts
+    switch (cycleDay) {
+      case 1:
+        return {
+          title: "⚡ Intervalado de Elite (400m)",
+          desc: "Aquecimento 1.5km + 10x400m no ritmo de prova (5km) com 90s de descanso. Finalize com 1km trote leve."
+        };
+      case 2:
+        return {
+          title: "🏃 Tempo Run (Limiar)",
+          desc: "Aquecimento 1km + 4km em ritmo 'confortavelmente difícil' (ritmo de 10km). Foco em manter a cadência alta."
+        };
+      case 3:
+        return {
+          title: "🎢 Fartlek Dinâmico",
+          desc: "25min de corrida variada: 2min forte / 1min leve. Melhora a capacidade de recuperação em movimento."
+        };
+      case 4:
+        return {
+          title: "⛰️ Sprints em Subida",
+          desc: "Aquecimento 2km + 8 tiros de 30s em subida íngreme. Retorno caminhando. Desenvolve potência muscular."
+        };
+      case 5:
+        return {
+          title: "🔋 Rodagem de Base (Longão)",
+          desc: "7km a 8km em ritmo leve (Zona 2). O objetivo é construir resistência aeróbica e fortalecer tendões."
+        };
+      default:
+        return {
+          title: "🔄 Recuperação Ativa",
+          desc: "3km de trote regenerativo (ritmo muito lento) + 15min de alongamento estático."
+        };
+    }
   }
 
-  return "🔥 HIIT: 10 tiros de 1min Zona 4 por 1min de descanso ativo";
+  // Default Cardio for other focuses
+  if (runDays.includes(dayWeek) || dayNum % 2 === 0) {
+    const dist = runDistances[dayWeek] || '5';
+    return { 
+      title: `🏃 Corrida de Manutenção (${dist}km)`, 
+      desc: `Manter ritmo constante e controlado. Foco na respiração nasal e postura ereta.` 
+    };
+  }
+
+  return { 
+    title: "🔥 HIIT Metabólico", 
+    desc: "10 tiros de 1min em intensidade máxima (Zona 4) por 1min de descanso ativo (caminhada)." 
+  };
 };
 
 export const getTrainingExamples = (dayNum: number, profile: Profile): string[] => {

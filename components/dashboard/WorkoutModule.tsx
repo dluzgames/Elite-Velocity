@@ -76,7 +76,8 @@ export default function WorkoutModule({ profile, dayNum, onComplete, isCompleted
                 <Zap size={16} className="text-[#3B82F6]" />
                 <p className="text-xs font-bold text-[#3B82F6] uppercase">Cardio / Metabólico</p>
               </div>
-              <p className="text-white text-sm font-medium">{cardio}</p>
+              <h4 className="font-bold text-white text-sm leading-tight">{cardio.title}</h4>
+              <p className="text-zinc-400 text-xs mt-1 leading-relaxed">{cardio.desc}</p>
             </div>
           </div>
         </div>

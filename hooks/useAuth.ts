@@ -1,64 +1,67 @@
 import { useState, useEffect } from 'react';
 import { User } from '@/types';
 
-export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+const STORAGE_KEY = 'elite_velocity_user';
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('elite_tracker_current_user');
-    if (storedUser) {
-      try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Failed to parse user", e);
+export const useAuth = () => {
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') {
+      const savedUser = localStorage.getItem(STORAGE_KEY);
+      if (savedUser) {
+        try {
+          return JSON.parse(savedUser);
+        } catch (e) {
+          console.error("Error parsing saved user", e);
+          localStorage.removeItem(STORAGE_KEY);
+        }
       }
     }
-    setLoading(false);
-  }, []);
+    return null;
+  });
+  const [loading, setLoading] = useState(false);
 
-  const login = (email: string, password: string): { success: boolean; error?: string } => {
-    const users: User[] = JSON.parse(localStorage.getItem('elite_tracker_users') || '[]');
-    const found = users.find(u => u.email === email && u.password === password);
-    
-    if (found) {
-      const userWithoutPassword = { id: found.id, name: found.name, email: found.email };
-      setUser(userWithoutPassword);
-      localStorage.setItem('elite_tracker_current_user', JSON.stringify(userWithoutPassword));
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    // Simple mock login: any email/password works for now, or we could check against a "users" list in localStorage
+    const users = JSON.parse(localStorage.getItem('elite_velocity_all_users') || '[]');
+    const foundUser = users.find((u: any) => u.email === email && u.password === password);
+
+    if (foundUser) {
+      const userData = { id: foundUser.id, name: foundUser.name, email: foundUser.email };
+      setUser(userData);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
       return { success: true };
     }
     
     return { success: false, error: 'Email ou senha inválidos.' };
   };
 
-  const signup = (name: string, email: string, password: string): { success: boolean; error?: string } => {
-    const users: User[] = JSON.parse(localStorage.getItem('elite_tracker_users') || '[]');
+  const signup = async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    const users = JSON.parse(localStorage.getItem('elite_velocity_all_users') || '[]');
     
-    if (users.find(u => u.email === email)) {
+    if (users.some((u: any) => u.email === email)) {
       return { success: false, error: 'Este email já está cadastrado.' };
     }
-    
-    const newUser: User = { 
-      id: Date.now().toString(), 
-      name, 
-      email, 
-      password 
+
+    const newUser = {
+      id: Math.random().toString(36).substring(2, 15),
+      name,
+      email,
+      password
     };
-    
+
     users.push(newUser);
-    localStorage.setItem('elite_tracker_users', JSON.stringify(users));
-    
-    const userWithoutPassword = { id: newUser.id, name: newUser.name, email: newUser.email };
-    setUser(userWithoutPassword);
-    localStorage.setItem('elite_tracker_current_user', JSON.stringify(userWithoutPassword));
+    localStorage.setItem('elite_velocity_all_users', JSON.stringify(users));
+
+    const userData = { id: newUser.id, name: newUser.name, email: newUser.email };
+    setUser(userData);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
     
     return { success: true };
   };
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null);
-    localStorage.removeItem('elite_tracker_current_user');
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   return { user, loading, login, signup, logout };

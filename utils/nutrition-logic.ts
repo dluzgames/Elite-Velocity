@@ -10,9 +10,9 @@ export const calculateProteinTarget = (profile: Profile): number => {
   let multiplier = 1.8; // Base multiplier
 
   // Adjust based on Workout Protocol
-  if (profile.workoutProtocol === 'Elite Resistance (Volume)' || profile.workoutProtocol === 'Musculação Clássica') {
+  if (profile.workoutProtocol === 'resistance' || profile.workoutProtocol === 'classic') {
     multiplier += 0.2;
-  } else if (profile.workoutProtocol === 'Tabata HIIT (20s/10s)') {
+  } else if (profile.workoutProtocol === 'tabata') {
     multiplier += 0.1;
   }
 
