@@ -4,46 +4,10 @@ import { FASTING_PROTOCOLS } from '@/utils/constants';
 import { differenceInDays, startOfDay } from 'date-fns';
 import { calculateProteinTarget } from '@/utils/nutrition-logic';
 
-const PROFILES_STORAGE_KEY = 'elite_velocity_profiles';
-
 export const useEliteVelocity = (userId?: string) => {
-  const [profiles, setProfiles] = useState<Record<string, Profile>>(() => {
-    if (typeof window !== 'undefined' && userId) {
-      const savedProfiles = localStorage.getItem(PROFILES_STORAGE_KEY);
-      if (savedProfiles) {
-        try {
-          const allProfiles = JSON.parse(savedProfiles);
-          const userProfiles: Record<string, Profile> = {};
-          Object.keys(allProfiles).forEach(id => {
-            if (allProfiles[id].userId === userId) {
-              userProfiles[id] = allProfiles[id];
-            }
-          });
-          return userProfiles;
-        } catch (e) {
-          console.error("Error parsing saved profiles", e);
-        }
-      }
-    }
-    return {};
-  });
+  const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window !== 'undefined' && userId) {
-      const savedProfiles = localStorage.getItem(PROFILES_STORAGE_KEY);
-      if (savedProfiles) {
-        try {
-          const allProfiles = JSON.parse(savedProfiles);
-          const hasProfiles = Object.values(allProfiles).some((p: any) => p.userId === userId);
-          return hasProfiles ? 'profiles' : 'onboarding';
-        } catch (e) {
-          return 'onboarding';
-        }
-      }
-      return 'onboarding';
-    }
-    return 'loading';
-  });
+  const [viewMode, setViewMode] = useState<ViewMode>('loading');
   const [fastingStatus, setFastingStatus] = useState({
     state: 'CARREGANDO',
     hoursLeft: 0,
@@ -59,27 +23,25 @@ export const useEliteVelocity = (userId?: string) => {
       return;
     }
 
-    const savedProfiles = localStorage.getItem(PROFILES_STORAGE_KEY);
-    if (savedProfiles) {
+    const fetchProfiles = async () => {
       try {
-        const allProfiles = JSON.parse(savedProfiles);
-        const userProfiles: Record<string, Profile> = {};
-        Object.keys(allProfiles).forEach(id => {
-          if (allProfiles[id].userId === userId) {
-            userProfiles[id] = allProfiles[id];
-          }
-        });
-        
-        setProfiles(userProfiles);
-        setViewMode(Object.keys(userProfiles).length === 0 ? 'onboarding' : 'profiles');
+        const res = await fetch(`/api/profiles?userId=${userId}`);
+        const data = await res.json();
+        if (data.success) {
+          setProfiles(data.profiles);
+          setViewMode(Object.keys(data.profiles).length === 0 ? 'onboarding' : 'profiles');
+        } else {
+          setProfiles({});
+          setViewMode('onboarding');
+        }
       } catch (e) {
+        console.error('Error fetching profiles', e);
         setProfiles({});
         setViewMode('onboarding');
       }
-    } else {
-      setProfiles({});
-      setViewMode('onboarding');
-    }
+    };
+
+    fetchProfiles();
   }, [userId]);
 
   const currentProfile = currentProfileId ? profiles[currentProfileId] : null;
@@ -89,52 +51,56 @@ export const useEliteVelocity = (userId?: string) => {
     
     const profileWithUser = { ...profile, userId };
     
-    setProfiles(prev => {
-      const updated = { ...prev, [profile.id]: profileWithUser };
+    try {
+      await fetch('/api/profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileWithUser),
+      });
       
-      // Save all profiles to localStorage
-      const allProfiles = JSON.parse(localStorage.getItem(PROFILES_STORAGE_KEY) || '{}');
-      allProfiles[profile.id] = profileWithUser;
-      localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(allProfiles));
-      
-      return updated;
-    });
+      setProfiles(prev => ({ ...prev, [profile.id]: profileWithUser }));
+    } catch (e) {
+      console.error('Error saving profile', e);
+    }
   }, [userId]);
 
   const updateProfileData = useCallback(async (partial: Partial<Profile>) => {
     if (!currentProfileId || !userId) return;
 
-    setProfiles(prev => {
-      if (!prev[currentProfileId]) return prev;
+    try {
+      const res = await fetch(`/api/profiles/${currentProfileId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...partial, userId }),
+      });
+      const data = await res.json();
       
-      const updatedProfile = { ...prev[currentProfileId], ...partial };
-      const updated = { ...prev, [currentProfileId]: updatedProfile };
-      
-      // Save all profiles to localStorage
-      const allProfiles = JSON.parse(localStorage.getItem(PROFILES_STORAGE_KEY) || '{}');
-      allProfiles[currentProfileId] = updatedProfile;
-      localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(allProfiles));
-      
-      return updated;
-    });
+      if (data.success) {
+        setProfiles(prev => ({ ...prev, [currentProfileId]: data.profile }));
+      }
+    } catch (e) {
+      console.error('Error updating profile', e);
+    }
   }, [currentProfileId, userId]);
 
   const deleteProfile = useCallback(async () => {
     if (!currentProfileId || !userId) return;
 
-    setProfiles(prev => {
-      const { [currentProfileId]: removed, ...rest } = prev;
+    try {
+      await fetch(`/api/profiles/${currentProfileId}?userId=${userId}`, {
+        method: 'DELETE',
+      });
       
-      // Save all profiles to localStorage
-      const allProfiles = JSON.parse(localStorage.getItem(PROFILES_STORAGE_KEY) || '{}');
-      delete allProfiles[currentProfileId];
-      localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(allProfiles));
+      setProfiles(prev => {
+        const { [currentProfileId]: removed, ...rest } = prev;
+        return rest;
+      });
       
-      return rest;
-    });
-    
-    setCurrentProfileId(null);
-    setViewMode('profiles');
+      setCurrentProfileId(null);
+      setViewMode('profiles');
+    } catch (e) {
+      console.error('Error deleting profile', e);
+    }
   }, [currentProfileId, userId]);
 
   // Calculate Current Day

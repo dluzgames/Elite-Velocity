@@ -22,10 +22,11 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
     fastingDays: [],
     protocol: '12/12',
     startHour: '12:00',
-    footballDays: [],
     workoutProtocol: 'classic',
     focuses: [],
+    runDays: [],
     runDistances: {},
+    runningDifficulty: 'none',
     dailyLogs: {},
     badges: [],
     startDate: new Date().toISOString()
@@ -58,10 +59,30 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
   };
 
   const handleFinish = () => {
+    const runDistances: Record<number, string> = {};
+    let dailyDistance = 0;
+    
+    if (formData.runningDifficulty === 'beginner') dailyDistance = 3;
+    else if (formData.runningDifficulty === 'advanced') dailyDistance = 5;
+    else if (formData.runningDifficulty === 'expert') dailyDistance = 10;
+
+    if (formData.runningDifficulty !== 'none' && formData.runDays) {
+      formData.runDays.forEach(day => {
+        runDistances[day] = dailyDistance.toString();
+      });
+    }
+
+    const durationDays = parseInt(formData.duration || '30', 10);
+    const weeks = durationDays / 7;
+    const weeklyDistance = (formData.runDays?.length || 0) * dailyDistance;
+    const calculatedTargetDistance = Math.round(weeks * weeklyDistance).toString();
+
     const profile: Profile = {
       ...formData as Profile,
       id: uuidv4(),
       startDate: new Date().toISOString(),
+      runDistances,
+      targetDistance: formData.runningDifficulty === 'none' ? '0' : calculatedTargetDistance,
       dailyLogs: {},
       badges: []
     };
@@ -79,7 +100,7 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
     }
   };
 
-  const toggleDay = (field: 'fastingDays' | 'footballDays', dayIndex: number) => {
+  const toggleDay = (field: 'fastingDays' | 'runDays', dayIndex: number) => {
     const current = formData[field] || [];
     if (current.includes(dayIndex)) {
       updateField(field, current.filter(d => d !== dayIndex));
@@ -200,17 +221,48 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                   </div>
                 </div>
 
-                {/* Run Distance - Always show since it's a goal now, removed runDays selection */}
-                <div className="space-y-2">
-                  <InputCst 
-                    label="DISTÂNCIA ALVO (KM)" 
-                    type="number" 
-                    step="0.1"
-                    placeholder="Ex: 5"
-                    value={formData.targetDistance}
-                    onChange={e => updateField('targetDistance', e.target.value)}
-                  />
-                  <p className="text-[10px] text-zinc-600 uppercase font-bold">A meta de corrida será baseada na sua disponibilidade semanal.</p>
+                {/* Run Distance / Difficulty */}
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-zinc-400 uppercase">Meta de Corrida</label>
+                    <select 
+                      className="bg-zinc-900/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00FF80]"
+                      value={formData.runningDifficulty}
+                      onChange={e => {
+                        const diff = e.target.value as Profile['runningDifficulty'];
+                        updateField('runningDifficulty', diff);
+                        if (diff === 'none') {
+                          updateField('runDays', []);
+                          updateField('targetDistance', '0');
+                        }
+                      }}
+                    >
+                      <option value="none">Não ter meta de corridas</option>
+                      <option value="beginner">Iniciante (3km por treino)</option>
+                      <option value="advanced">Avançado (5km por treino)</option>
+                      <option value="expert">Experiente (10km por treino)</option>
+                    </select>
+                  </div>
+
+                  {formData.runningDifficulty !== 'none' && (
+                    <div>
+                      <label className="text-xs font-bold text-zinc-400 uppercase mb-2 block">DIAS DE CORRIDA</label>
+                      <div className="flex gap-1 justify-between">
+                        {WEEK_DAYS.map((d, i) => (
+                          <button
+                            key={i}
+                            onClick={() => toggleDay('runDays', i)}
+                            className={`w-10 h-10 rounded-full font-bold text-sm ${
+                              formData.runDays?.includes(i) ? 'bg-blue-500 text-white' : 'bg-zinc-800 text-zinc-600'
+                            }`}
+                          >
+                            {d[0]}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-zinc-600 uppercase font-bold mt-2">Selecione os dias que você irá correr.</p>
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -261,23 +313,6 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
             {step === 4 && (
               <>
                 <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-bold text-zinc-400 uppercase mb-2 block">DIAS DE FUTEBOL / COLETIVO</label>
-                    <div className="flex gap-1 justify-between">
-                      {WEEK_DAYS.map((d, i) => (
-                        <button
-                          key={i}
-                          onClick={() => toggleDay('footballDays', i)}
-                          className={`w-10 h-10 rounded-full font-bold text-sm ${
-                            formData.footballDays?.includes(i) ? 'bg-blue-500 text-white' : 'bg-zinc-800 text-zinc-600'
-                          }`}
-                        >
-                          {d[0]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-zinc-400 uppercase">Protocolo de Treino</label>
                     <div className="space-y-2">

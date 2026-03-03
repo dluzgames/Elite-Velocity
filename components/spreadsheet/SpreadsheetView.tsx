@@ -62,9 +62,9 @@ export default function SpreadsheetView({ profile, currentDay, onToggleDay, onAs
         dayOfWeek,
         i,
         profile.focuses,
-        profile.footballDays,
         profile.runDays,
-        profile.runDistances
+        profile.runDistances,
+        profile.runningDifficulty
       );
 
       const isCompleted = profile.dailyLogs[i]?.completed || false;

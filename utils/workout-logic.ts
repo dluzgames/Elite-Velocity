@@ -12,6 +12,8 @@ export const getWorkoutSplit = (gender: 'm' | 'f', focuses: string[], workoutPro
 
   const isLowerFocus = gender === 'f' || focuses.includes('inf');
   const isUpperFocus = focuses.includes('sup');
+  const isFutFocus = focuses.includes('fut');
+  const isCorFocus = focuses.includes('cor');
   const isHiit = workoutProtocol === 'tabata';
   const isVolume = workoutProtocol === 'resistance';
 
@@ -19,7 +21,73 @@ export const getWorkoutSplit = (gender: 'm' | 'f', focuses: string[], workoutPro
   const warmUp = "Aquecimento Geral (5-10min)";
   const mobility = "Mobilidade Articular";
 
-  if (isLowerFocus) {
+  if (isFutFocus) {
+    split = [
+      { 
+        main: "Força Explosiva (Pernas)", 
+        desc: "Potência para arranques e saltos", 
+        exercises: ["Agachamento com Salto", "Afundo Búlgaro", "Levantamento Terra Hex Bar", "Box Jump (Salto na Caixa)", "Panturrilha Unilateral"] 
+      },
+      { 
+        main: "Core Rotacional e Estabilidade", 
+        desc: "Prevenção de lesões e mudanças de direção", 
+        exercises: ["Prancha com Rotação", "Woodchopper no Cabo", "Ponte Unilateral", "Abdominal Canivete", "Prancha Lateral"] 
+      },
+      { 
+        main: "Superiores (Força de Contato)", 
+        desc: "Proteção de bola e disputas", 
+        exercises: ["Supino Reto Halteres", "Remada Curvada", "Desenvolvimento Halteres", "Barra Fixa", "Flexão de Braço"] 
+      },
+      { 
+        main: "Agilidade e Pliometria", 
+        desc: "Reatividade e velocidade de pés", 
+        exercises: ["Skater Jumps", "Drills de Escada de Agilidade", "Sprints Curtos (10m)", "Saltos Laterais", "Burpees"] 
+      },
+      { 
+        main: "Força Unilateral (Pernas)", 
+        desc: "Equilíbrio e correção de assimetrias", 
+        exercises: ["Agachamento Pistola (Adaptado)", "Stiff Unilateral", "Passada com Carga", "Elevação Pélvica Unilateral", "Cadeira Flexora Unilateral"] 
+      },
+      { 
+        main: "Recuperação Ativa e Mobilidade", 
+        desc: "Regeneração muscular", 
+        exercises: ["Liberação Miofascial", "Alongamento Dinâmico", "Mobilidade de Quadril", "Mobilidade de Tornozelo", "Yoga/Pilates Básico"] 
+      },
+    ];
+  } else if (isCorFocus) {
+    split = [
+      { 
+        main: "Força Específica (Pernas)", 
+        desc: "Resistência muscular e prevenção", 
+        exercises: ["Agachamento Livre", "Stiff", "Afundo", "Elevação de Panturrilha em Pé", "Elevação de Panturrilha Sentado"] 
+      },
+      { 
+        main: "Core Estabilizador", 
+        desc: "Postura e eficiência na corrida", 
+        exercises: ["Prancha Isométrica", "Dead Bug", "Bird Dog", "Ponte Glútea", "Prancha Lateral"] 
+      },
+      { 
+        main: "Superiores (Postura)", 
+        desc: "Balanço de braços e respiração", 
+        exercises: ["Remada Baixa", "Puxada Alta", "Crucifixo Inverso", "Flexão de Braço", "Desenvolvimento Leve"] 
+      },
+      { 
+        main: "Força Unilateral e Pliometria", 
+        desc: "Potência a cada passada", 
+        exercises: ["Afundo Búlgaro", "Stiff Unilateral", "Saltos Unilaterais (Pliometria Leve)", "Step Up (Subida na Caixa)", "Elevação Pélvica Unilateral"] 
+      },
+      { 
+        main: "Resistência de Core e Quadril", 
+        desc: "Estabilidade pélvica", 
+        exercises: ["Cadeira Abdutora", "Cadeira Adutora", "Abdominal Bicicleta", "Elevação de Pernas", "Prancha com Toque no Ombro"] 
+      },
+      { 
+        main: "Mobilidade e Liberação", 
+        desc: "Recuperação de tecidos", 
+        exercises: ["Liberação com Rolo (Banda Iliotibial, Panturrilhas)", "Alongamento de Isquiotibiais", "Mobilidade de Tornozelo", "Alongamento de Quadríceps", "Mobilidade Torácica"] 
+      },
+    ];
+  } else if (isLowerFocus) {
     split = [
       { 
         main: "Inferiores (Quadríceps)", 
@@ -123,9 +191,9 @@ export const getCardioDetail = (
   dayWeek: number, // 0-6 (0 is Sunday)
   dayNum: number,
   focuses: string[],
-  footballDays: number[],
   runDays: number[],
-  runDistances: Record<number, string>
+  runDistances: Record<number, string>,
+  runningDifficulty: 'none' | 'beginner' | 'advanced' | 'expert' = 'none'
 ): { title: string; desc: string } => {
   if (dayWeek === 0) {
     return { 
@@ -134,31 +202,25 @@ export const getCardioDetail = (
     };
   }
 
-  if (footballDays.includes(dayWeek)) {
-    return { 
-      title: "⚽ Treino Coletivo / Futebol", 
-      desc: "Aquecimento funcional (15min) + Jogo. Foco em agilidade e explosão lateral." 
-    };
-  }
-
   // If user has "velocidade" focus, we use a specific 5km speed cycle
-  if (focuses.includes('vel')) {
+  if (runningDifficulty !== 'none' && (focuses.includes('vel') || focuses.includes('cor'))) {
     const cycleDay = dayNum % 6; // Cycle through 6 types of workouts
+    const isCor = focuses.includes('cor');
     switch (cycleDay) {
       case 1:
         return {
-          title: "⚡ Intervalado de Elite (400m)",
-          desc: "Aquecimento 1.5km + 10x400m no ritmo de prova (5km) com 90s de descanso. Finalize com 1km trote leve."
+          title: isCor ? "⚡ Intervalado Longo (800m)" : "⚡ Intervalado de Elite (400m)",
+          desc: isCor ? "Aquecimento 2km + 6x800m no ritmo de prova (10km) com 2min de descanso. Finalize com 1km trote leve." : "Aquecimento 1.5km + 10x400m no ritmo de prova (5km) com 90s de descanso. Finalize com 1km trote leve."
         };
       case 2:
         return {
           title: "🏃 Tempo Run (Limiar)",
-          desc: "Aquecimento 1km + 4km em ritmo 'confortavelmente difícil' (ritmo de 10km). Foco em manter a cadência alta."
+          desc: isCor ? "Aquecimento 2km + 6km em ritmo 'confortavelmente difícil' (ritmo de meia maratona)." : "Aquecimento 1km + 4km em ritmo 'confortavelmente difícil' (ritmo de 10km). Foco em manter a cadência alta."
         };
       case 3:
         return {
           title: "🎢 Fartlek Dinâmico",
-          desc: "25min de corrida variada: 2min forte / 1min leve. Melhora a capacidade de recuperação em movimento."
+          desc: isCor ? "35min de corrida variada: 3min forte / 2min leve. Ensina o corpo a limpar o lactato." : "25min de corrida variada: 2min forte / 1min leve. Melhora a capacidade de recuperação em movimento."
         };
       case 4:
         return {
@@ -168,7 +230,7 @@ export const getCardioDetail = (
       case 5:
         return {
           title: "🔋 Rodagem de Base (Longão)",
-          desc: "7km a 8km em ritmo leve (Zona 2). O objetivo é construir resistência aeróbica e fortalecer tendões."
+          desc: isCor ? "10km a 15km em ritmo leve (Zona 2). Construção da base aeróbica e resistência mental." : "7km a 8km em ritmo leve (Zona 2). O objetivo é construir resistência aeróbica e fortalecer tendões."
         };
       default:
         return {
@@ -178,8 +240,29 @@ export const getCardioDetail = (
     }
   }
 
+  if (runningDifficulty !== 'none' && focuses.includes('fut')) {
+    const cycleDay = dayNum % 3;
+    switch (cycleDay) {
+      case 1:
+        return {
+          title: "⚽ Sprints Repetidos (RSA)",
+          desc: "Aquecimento + 10 tiros de 20m com mudança de direção. Descanso de 30s entre tiros. Simula o esforço do jogo."
+        };
+      case 2:
+        return {
+          title: "🏃 Resistência Intermitente",
+          desc: "15s correndo forte / 15s caminhando por 10 minutos. Repetir 2 blocos com 3min de descanso entre eles."
+        };
+      default:
+        return {
+          title: "🔋 Trote de Recuperação",
+          desc: "20 minutos de corrida muito leve para soltar a musculatura + alongamentos."
+        };
+    }
+  }
+
   // Default Cardio for other focuses
-  if (runDays.includes(dayWeek) || dayNum % 2 === 0) {
+  if (runningDifficulty !== 'none' && runDays.includes(dayWeek)) {
     const dist = runDistances[dayWeek] || '5';
     return { 
       title: `🏃 Corrida de Manutenção (${dist}km)`, 
@@ -187,9 +270,16 @@ export const getCardioDetail = (
     };
   }
 
+  if (dayNum % 2 === 0) {
+    return { 
+      title: "🔥 HIIT Metabólico (Corrida)", 
+      desc: "10 tiros de 1min em intensidade máxima (Zona 4) por 1min de descanso ativo (caminhada)." 
+    };
+  }
+
   return { 
-    title: "🔥 HIIT Metabólico", 
-    desc: "10 tiros de 1min em intensidade máxima (Zona 4) por 1min de descanso ativo (caminhada)." 
+    title: "🏃 Cardio Leve (Trote/Caminhada)", 
+    desc: "30 a 40 minutos em ritmo moderado (Zona 2). Foco em recuperação ativa e queima de gordura." 
   };
 };
 

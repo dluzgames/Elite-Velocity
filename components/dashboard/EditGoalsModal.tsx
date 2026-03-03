@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Target, Weight, Ruler, Zap } from 'lucide-react';
+import { X, Target, Weight, Ruler, Zap, Clock } from 'lucide-react';
 import { Profile } from '@/types';
 import { InputCst } from '@/components/ui/Inputs';
 
@@ -18,7 +18,8 @@ export default function EditGoalsModal({ profile, isOpen, onClose, onSave }: Edi
     targetLostWeight: profile.targetLostWeight || '',
     targetDistance: profile.targetDistance || '',
     weight: profile.weight || '',
-    height: profile.height || ''
+    height: profile.height || '',
+    startHour: profile.startHour || '12:00'
   });
 
   const handleSave = () => {
@@ -96,6 +97,19 @@ export default function EditGoalsModal({ profile, isOpen, onClose, onSave }: Edi
                   step="0.1"
                   value={formData.height}
                   onChange={e => setFormData(prev => ({ ...prev, height: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <Clock size={16} className="text-zinc-500" />
+                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Jejum</span>
+                </div>
+                <InputCst 
+                  label="Início do Jejum (HH:MM)" 
+                  type="time" 
+                  value={formData.startHour}
+                  onChange={e => setFormData(prev => ({ ...prev, startHour: e.target.value }))}
                 />
               </div>
             </div>

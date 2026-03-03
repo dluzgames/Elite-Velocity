@@ -215,27 +215,6 @@ export default function ProtocolView({ profile }: ProtocolViewProps) {
               <p className="text-xs text-zinc-500 mt-1">{workoutProtocol?.desc}</p>
             </div>
 
-            <div className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap size={16} className="text-[#00FF80]" />
-                <span className="text-xs font-bold text-zinc-500 uppercase">Dias de Futebol / Coletivo</span>
-              </div>
-              <div className="flex gap-2">
-                {WEEK_DAYS.map((d, i) => (
-                  <div 
-                    key={i} 
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold border ${
-                      profile.footballDays.includes(i) 
-                        ? 'bg-blue-500 border-blue-400 text-white' 
-                        : 'bg-zinc-800 border-zinc-700 text-zinc-600'
-                    }`}
-                  >
-                    {d[0]}
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <div className="p-4 bg-zinc-900/30 rounded-xl border border-zinc-800">
               <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Mentalidade Elite</h4>
               <p className="text-xs text-zinc-500 italic leading-relaxed">

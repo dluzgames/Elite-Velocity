@@ -115,9 +115,9 @@ export default function FullProtocolModal({ isOpen, onClose, profile }: FullProt
                       dayOfWeek,
                       day,
                       profile.focuses,
-                      profile.footballDays,
                       profile.runDays,
-                      profile.runDistances
+                      profile.runDistances,
+                      profile.runningDifficulty
                     );
 
                     const isFasting = profile.fastingDays.includes(dayOfWeek);

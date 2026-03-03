@@ -12,6 +12,8 @@ export const FOCUS_OPTIONS = [
   { id: 'vel', label: 'Velocidade Sprint', short: 'Velocidade' },
   { id: 'mob', label: 'Mobilidade/Core', short: 'Mobilidade' },
   { id: 'abd', label: 'Estética Abdominal', short: 'Abdômen' },
+  { id: 'fut', label: 'Jogador de Futebol', short: 'Futebol' },
+  { id: 'cor', label: 'Corredor', short: 'Corrida' },
 ];
 
 export const BADGES: Badge[] = [

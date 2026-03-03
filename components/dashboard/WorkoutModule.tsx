@@ -33,9 +33,9 @@ export default function WorkoutModule({ profile, dayNum, onComplete, isCompleted
     dayOfWeek,
     dayNum,
     profile.focuses,
-    profile.footballDays,
     profile.runDays,
-    profile.runDistances
+    profile.runDistances,
+    profile.runningDifficulty
   );
 
   const dailyLog = profile.dailyLogs[dayNum];

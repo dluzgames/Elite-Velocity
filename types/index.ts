@@ -31,7 +31,6 @@ export interface Profile {
   fastingDays: number[];
   protocol: string;
   startHour: string;
-  footballDays: number[];
   workoutProtocol: string;
   gender: 'm' | 'f';
   focuses: string[];
@@ -39,6 +38,7 @@ export interface Profile {
   dailyLogs: Record<number, DailyLog>;
   runDays: number[];
   runDistances: Record<number, string>;
+  runningDifficulty: 'none' | 'beginner' | 'advanced' | 'expert';
   badges: string[];
 }
 
