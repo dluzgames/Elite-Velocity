@@ -30,7 +30,7 @@ export default function NutritionModule({
   const [isMealModalOpen, setIsMealModalOpen] = useState(false);
   const [isMealsExpanded, setIsMealsExpanded] = useState(false);
   
-  const isFastingDay = profile.fastingDays.includes(dayOfWeek);
+  const isFastingDay = profile.fastingDays?.includes(dayOfWeek) || false;
   
   // Dynamic calculations based on current weight
   const currentWeight = getCurrentWeight(profile, currentDay);

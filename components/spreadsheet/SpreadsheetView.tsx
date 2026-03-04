@@ -61,15 +61,12 @@ export default function SpreadsheetView({ profile, currentDay, onToggleDay, onAs
       const cardio = getCardioDetail(
         dayOfWeek,
         i,
-        profile.focuses,
-        profile.runDays,
-        profile.runDistances,
-        profile.runningDifficulty
+        profile
       );
 
       const isCompleted = profile.dailyLogs[i]?.completed || false;
       const isToday = i === currentDay;
-      const isFasting = profile.fastingDays.includes(dayOfWeek);
+      const isFasting = profile.fastingDays?.includes(dayOfWeek) || false;
 
       data.push({
         day: i,

@@ -49,7 +49,7 @@ export default function WorkoutModule({
   const dailyLog = profile.dailyLogs[dayNum];
   const exerciseNotes = dailyLog?.exerciseNotes || {};
   
-  const isFasting = profile.fastingDays.includes(dayOfWeek);
+  const isFasting = profile.fastingDays?.includes(dayOfWeek) || false;
   const caloriesTarget = calculateCaloriesTarget(profile);
   const proteinTarget = calculateProteinTarget(profile);
 

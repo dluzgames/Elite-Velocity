@@ -14,6 +14,7 @@ export const useEliteVelocity = (userId?: string) => {
     minsLeft: 0,
     isFasting: false
   });
+  const [activeReminder, setActiveReminder] = useState<string | null>(null);
 
   // Sync profiles when userId changes
   useEffect(() => {
@@ -163,6 +164,59 @@ export const useEliteVelocity = (userId?: string) => {
     const interval = setInterval(calculateFasting, 60000); // Update every minute
     return () => clearInterval(interval);
   }, [currentProfile]);
+
+  // Reminders Logic
+  useEffect(() => {
+    if (!currentProfile) return;
+
+    const checkReminders = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      
+      // Only remind between 12:00 and 21:00 to avoid late night/early morning spam
+      if (hours >= 12 && hours < 21) {
+        const log = currentProfile.dailyLogs[currentDayNumber];
+        const hasLoggedWorkout = log?.workoutCompleted;
+        const hasLoggedWater = (log?.water || 0) > 0;
+        const hasLoggedProtein = (log?.protein || 0) > 0;
+
+        if (!hasLoggedWorkout || !hasLoggedWater || !hasLoggedProtein) {
+          const missing = [];
+          if (!hasLoggedWorkout) missing.push('Treino');
+          if (!hasLoggedWater) missing.push('Água');
+          if (!hasLoggedProtein) missing.push('Proteína');
+          
+          const message = `Missão em andamento! Você ainda não registrou: ${missing.join(', ')}. Mantenha a constância!`;
+          setActiveReminder(message);
+
+          // Browser Notification
+          if (typeof window !== 'undefined' && 'Notification' in window) {
+            if (Notification.permission === 'granted') {
+              // We could add a throttle here, but for now simple trigger
+              new Notification('Elite Velocity', { 
+                body: message,
+                icon: '/favicon.ico'
+              });
+            } else if (Notification.permission === 'default') {
+              Notification.requestPermission();
+            }
+          }
+        } else {
+          setActiveReminder(null);
+        }
+      } else {
+        setActiveReminder(null);
+      }
+    };
+
+    checkReminders();
+    const interval = setInterval(checkReminders, 1000 * 60 * 60); // Check every hour
+    return () => clearInterval(interval);
+  }, [currentProfile, currentDayNumber]);
+
+  const dismissReminder = useCallback(() => {
+    setActiveReminder(null);
+  }, []);
 
   const markDayComplete = useCallback((dayNum: number, weight?: number, maxSpeed?: number) => {
     if (!currentProfile) return;
@@ -547,6 +601,8 @@ export const useEliteVelocity = (userId?: string) => {
     updateMaxSpeed,
     resetDay,
     addMeal,
-    removeMeal
+    removeMeal,
+    activeReminder,
+    dismissReminder
   };
 };

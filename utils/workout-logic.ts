@@ -10,10 +10,10 @@ export const getWorkoutSplit = (gender: 'm' | 'f', focuses: string[], workoutPro
   // Base split logic
   let split: WorkoutDay[] = [];
 
-  const isLowerFocus = gender === 'f' || focuses.includes('inf');
-  const isUpperFocus = focuses.includes('sup');
-  const isFutFocus = focuses.includes('fut');
-  const isCorFocus = focuses.includes('cor');
+  const isLowerFocus = gender === 'f' || focuses?.includes('inf');
+  const isUpperFocus = focuses?.includes('sup');
+  const isFutFocus = focuses?.includes('fut');
+  const isCorFocus = focuses?.includes('cor');
   const isHiit = workoutProtocol === 'tabata';
   const isVolume = workoutProtocol === 'resistance';
 
@@ -166,14 +166,14 @@ export const getWorkoutSplit = (gender: 'm' | 'f', focuses: string[], workoutPro
   }
 
   // Modifiers
-  if (focuses.includes('abd')) {
+  if (focuses?.includes('abd')) {
     split[1].desc += " + Core";
     split[1].exercises.push("Abdominal Supra", "Prancha Lateral");
     split[4].desc += " + Abdômen";
     split[4].exercises.push("Abdominal Infra", "Vacuum");
   }
 
-  if (focuses.includes('mob')) {
+  if (focuses?.includes('mob')) {
     split[0].desc += " + Mobilidade";
     split[0].exercises.unshift("Mobilidade de Ombros");
     split[2].desc += " + Mobilidade";
@@ -204,9 +204,9 @@ export const getCardioDetail = (
   const hasMission = ['21', '42', '51', '100', 'custom'].includes(runningDifficulty);
 
   // If user has "velocidade" focus or a specific mission, we use a specific cycle
-  if ((runningDifficulty !== 'none' || hasMission) && (focuses.includes('vel') || focuses.includes('cor'))) {
+  if ((runningDifficulty !== 'none' || hasMission) && (focuses?.includes('vel') || focuses?.includes('cor'))) {
     const cycleDay = dayNum % 6; // Cycle through 6 types of workouts
-    const isCor = focuses.includes('cor') || hasMission;
+    const isCor = focuses?.includes('cor') || hasMission;
     switch (cycleDay) {
       case 1:
         return {
@@ -241,7 +241,7 @@ export const getCardioDetail = (
     }
   }
 
-  if (runningDifficulty !== 'none' && focuses.includes('fut')) {
+  if (runningDifficulty !== 'none' && focuses?.includes('fut')) {
     const cycleDay = dayNum % 3;
     switch (cycleDay) {
       case 1:
@@ -263,8 +263,8 @@ export const getCardioDetail = (
   }
 
   // Default Cardio for other focuses
-  if (runningDifficulty !== 'none' && (runDays.includes(dayWeek) || hasMission)) {
-    let dist = runDistances[dayWeek] || '5';
+  if (runningDifficulty !== 'none' && (runDays?.includes(dayWeek) || hasMission)) {
+    let dist = runDistances?.[dayWeek] || '5';
     if (hasMission && !runDistances[dayWeek]) {
       // Suggest a distance to chip away at the mission
       const total = parseFloat(targetDistance || '0');

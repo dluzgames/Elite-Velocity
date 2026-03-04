@@ -18,7 +18,7 @@ import AuthScreen from '@/components/auth/AuthScreen';
 import EditGoalsModal from '@/components/dashboard/EditGoalsModal';
 import ProtocolView from '@/components/dashboard/ProtocolView';
 import { motion, AnimatePresence } from 'motion/react';
-import { LayoutDashboard, Table, Activity, Users, LogOut, Settings, FileText } from 'lucide-react';
+import { LayoutDashboard, Table, Activity, Users, LogOut, Settings, FileText, X, Bell } from 'lucide-react';
 import { BADGES } from '@/utils/constants';
 
 export default function Home() {
@@ -44,7 +44,9 @@ export default function Home() {
     resetDay,
     updateProfileData,
     addMeal,
-    removeMeal
+    removeMeal,
+    activeReminder,
+    dismissReminder
   } = useEliteVelocity(user?.id);
 
   const [dashboardTab, setDashboardTab] = useState<'panel' | 'sheet' | 'history' | 'protocol'>('panel');
@@ -209,6 +211,32 @@ export default function Home() {
             </button>
           </div>
         </header>
+
+        <AnimatePresence>
+          {activeReminder && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6"
+            >
+              <div className="bg-[#00FF80]/10 border border-[#00FF80]/30 rounded-2xl p-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-[#00FF80] p-2 rounded-lg">
+                    <Bell size={18} className="text-black" />
+                  </div>
+                  <p className="text-sm font-bold text-white">{activeReminder}</p>
+                </div>
+                <button 
+                  onClick={dismissReminder}
+                  className="text-zinc-500 hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence mode="wait">
           {dashboardTab === 'panel' && (

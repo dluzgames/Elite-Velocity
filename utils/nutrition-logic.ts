@@ -17,7 +17,7 @@ export const calculateProteinTarget = (profile: Profile): number => {
   }
 
   // Adjust based on Focuses
-  if (profile.focuses.includes('sup') || profile.focuses.includes('inf')) {
+  if (profile.focuses?.includes('sup') || profile.focuses?.includes('inf')) {
     multiplier += 0.1;
   }
 

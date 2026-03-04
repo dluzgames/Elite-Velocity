@@ -114,13 +114,10 @@ export default function FullProtocolModal({ isOpen, onClose, profile }: FullProt
                     const cardio = getCardioDetail(
                       dayOfWeek,
                       day,
-                      profile.focuses,
-                      profile.runDays,
-                      profile.runDistances,
-                      profile.runningDifficulty
+                      profile
                     );
 
-                    const isFasting = profile.fastingDays.includes(dayOfWeek);
+                    const isFasting = profile.fastingDays?.includes(dayOfWeek) || false;
 
                     return (
                       <div key={day} className="border border-zinc-200 rounded-xl p-4 flex flex-col md:flex-row gap-4 break-inside-avoid">

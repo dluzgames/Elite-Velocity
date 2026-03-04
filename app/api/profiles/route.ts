@@ -33,12 +33,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Profile ID and User ID are required' }, { status: 400 });
     }
 
+    // Check if user exists to avoid FOREIGN KEY constraint failure
+    const userCheck = db.prepare('SELECT id FROM users WHERE id = ?').get(profile.userId);
+    if (!userCheck) {
+      return NextResponse.json({ success: false, error: 'Usuário não encontrado. Faça login novamente.' }, { status: 404 });
+    }
+
     const stmt = db.prepare('INSERT OR REPLACE INTO profiles (id, userId, data) VALUES (?, ?, ?)');
     stmt.run(profile.id, profile.userId, JSON.stringify(profile));
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Save profile error:', error);
-    return NextResponse.json({ success: false, error: 'Erro no servidor.' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Erro no servidor ao salvar perfil.' }, { status: 500 });
   }
 }

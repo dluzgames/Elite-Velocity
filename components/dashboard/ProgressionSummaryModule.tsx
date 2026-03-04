@@ -33,7 +33,7 @@ export default function ProgressionSummaryModule({ profile, currentDay }: Progre
     date.setDate(date.getDate() + (i - 1));
     const dayOfWeek = date.getDay();
     
-    if (profile.fastingDays.includes(dayOfWeek)) {
+    if (profile.fastingDays?.includes(dayOfWeek)) {
       totalFastingDaysPlanned++;
       // Check if this day is in the past/today and completed
       if (profile.dailyLogs[i]?.completed) {

@@ -24,10 +24,8 @@ const nextConfig: NextConfig = {
   },
   output: 'standalone',
   transpilePackages: ['motion'],
-  webpack: (config, {dev, isServer}) => {
-    if (isServer) {
-      config.externals.push('better-sqlite3');
-    }
+  serverComponentsExternalPackages: ['better-sqlite3'],
+  webpack: (config, {dev}) => {
     // HMR is disabled in AI Studio via DISABLE_HMR env var.
     // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
     if (dev && process.env.DISABLE_HMR === 'true') {
