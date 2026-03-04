@@ -1,4 +1,4 @@
-import { Profile } from '@/types';
+import { Profile, Meal } from '@/types';
 
 export const calculateProteinTarget = (profile: Profile): number => {
   const weight = parseFloat(profile.weight);
@@ -75,4 +75,13 @@ export const getBMIStatus = (bmi: number): string => {
   if (bmi < 24.9) return 'Peso Normal';
   if (bmi < 29.9) return 'Sobrepeso';
   return 'Obesidade';
+};
+
+export const calculateMealTotals = (meals: Meal[] = []) => {
+  return meals.reduce((acc, meal) => ({
+    calories: acc.calories + (meal.calories || 0),
+    protein: acc.protein + (meal.protein || 0),
+    carbs: acc.carbs + (meal.carbs || 0),
+    fats: acc.fats + (meal.fats || 0),
+  }), { calories: 0, protein: 0, carbs: 0, fats: 0 });
 };

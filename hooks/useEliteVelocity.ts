@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Profile, ViewMode, DailyLog } from '@/types';
+import { Profile, ViewMode, DailyLog, Meal } from '@/types';
 import { FASTING_PROTOCOLS } from '@/utils/constants';
 import { differenceInDays, startOfDay } from 'date-fns';
 import { calculateProteinTarget } from '@/utils/nutrition-logic';
@@ -469,6 +469,62 @@ export const useEliteVelocity = (userId?: string) => {
     });
   }, [currentProfile, updateProfileData]);
 
+  const addMeal = useCallback((dayNum: number, meal: Omit<Meal, 'id'>) => {
+    if (!currentProfile) return;
+
+    const currentLog = currentProfile.dailyLogs[dayNum] || {
+      completed: false,
+      water: 0,
+      protein: 0,
+      workoutCompleted: false,
+      waterCompleted: false,
+      proteinCompleted: false,
+      weight: undefined,
+      maxSpeed: undefined,
+      meals: []
+    };
+
+    const newMeal: Meal = {
+      ...meal,
+      id: Math.random().toString(36).substring(2, 9)
+    };
+
+    const updatedLog = {
+      ...currentLog,
+      meals: [...(currentLog.meals || []), newMeal]
+    };
+
+    const updatedLogs = {
+      ...currentProfile.dailyLogs,
+      [dayNum]: updatedLog
+    };
+
+    updateProfileData({
+      dailyLogs: updatedLogs
+    });
+  }, [currentProfile, updateProfileData]);
+
+  const removeMeal = useCallback((dayNum: number, mealId: string) => {
+    if (!currentProfile) return;
+
+    const currentLog = currentProfile.dailyLogs[dayNum];
+    if (!currentLog || !currentLog.meals) return;
+
+    const updatedLog = {
+      ...currentLog,
+      meals: currentLog.meals.filter(m => m.id !== mealId)
+    };
+
+    const updatedLogs = {
+      ...currentProfile.dailyLogs,
+      [dayNum]: updatedLog
+    };
+
+    updateProfileData({
+      dailyLogs: updatedLogs
+    });
+  }, [currentProfile, updateProfileData]);
+
   return {
     profiles,
     currentProfile,
@@ -489,6 +545,8 @@ export const useEliteVelocity = (userId?: string) => {
     updateDistanceRun,
     updateWeight,
     updateMaxSpeed,
-    resetDay
+    resetDay,
+    addMeal,
+    removeMeal
   };
 };

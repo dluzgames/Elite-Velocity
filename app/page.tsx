@@ -42,7 +42,9 @@ export default function Home() {
     updateWeight,
     updateMaxSpeed,
     resetDay,
-    updateProfileData
+    updateProfileData,
+    addMeal,
+    removeMeal
   } = useEliteVelocity(user?.id);
 
   const [dashboardTab, setDashboardTab] = useState<'panel' | 'sheet' | 'history' | 'protocol'>('panel');
@@ -51,7 +53,8 @@ export default function Home() {
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    setMounted(true);
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   if (!mounted) {
@@ -237,6 +240,8 @@ export default function Home() {
                     fastingStatus={fastingStatus} 
                     dayOfWeek={dayOfWeek}
                     currentDay={currentDayNumber}
+                    onAddMeal={addMeal}
+                    onRemoveMeal={removeMeal}
                   />
                   <HydrationModule 
                     profile={currentProfile}
@@ -253,6 +258,7 @@ export default function Home() {
                   isOutOfBounds={isOutOfBounds}
                   onComplete={() => {}} 
                   onUpdateNote={(exercise, note) => updateExerciseNote(currentDayNumber, exercise, note)}
+                  onAskAI={() => fryaChatRef.current?.triggerMessage("Analise meu treino de hoje e me dê dicas de performance.")}
                 />
 
                 {/* Column 3: Daily Missions Checklist & Badges */}

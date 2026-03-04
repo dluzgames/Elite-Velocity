@@ -5,6 +5,16 @@ export interface User {
   password?: string;
 }
 
+export interface Meal {
+  id: string;
+  time: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+}
+
 export interface DailyLog {
   completed: boolean;
   weight?: number;
@@ -17,6 +27,7 @@ export interface DailyLog {
   notes?: string;
   exerciseNotes?: Record<string, string>;
   distanceRun?: number;
+  meals?: Meal[];
 }
 
 export interface Profile {

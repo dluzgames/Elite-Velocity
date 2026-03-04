@@ -19,11 +19,43 @@ export default function EditGoalsModal({ profile, isOpen, onClose, onSave }: Edi
     targetDistance: profile.targetDistance || '',
     weight: profile.weight || '',
     height: profile.height || '',
-    startHour: profile.startHour || '12:00'
+    startHour: profile.startHour || '12:00',
+    targetWeight: (parseFloat(profile.weight) - parseFloat(profile.targetLostWeight || '0')).toString()
   });
 
+  const handleTargetWeightChange = (val: string) => {
+    const targetW = parseFloat(val);
+    const currentW = parseFloat(formData.weight);
+    if (!isNaN(targetW) && !isNaN(currentW)) {
+      const lost = Math.max(0, currentW - targetW);
+      setFormData(prev => ({ 
+        ...prev, 
+        targetWeight: val,
+        targetLostWeight: lost.toFixed(1)
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, targetWeight: val }));
+    }
+  };
+
+  const handleTargetLostWeightChange = (val: string) => {
+    const lost = parseFloat(val);
+    const currentW = parseFloat(formData.weight);
+    if (!isNaN(lost) && !isNaN(currentW)) {
+      const targetW = currentW - lost;
+      setFormData(prev => ({ 
+        ...prev, 
+        targetLostWeight: val,
+        targetWeight: targetW.toFixed(1)
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, targetLostWeight: val }));
+    }
+  };
+
   const handleSave = () => {
-    onSave(formData);
+    const { targetWeight, ...dataToSave } = formData;
+    onSave(dataToSave);
     onClose();
   };
 
@@ -56,19 +88,28 @@ export default function EditGoalsModal({ profile, isOpen, onClose, onSave }: Edi
                   <Weight size={16} className="text-zinc-500" />
                   <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Peso e Composição</span>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <InputCst 
+                    label="Peso Atual (kg)" 
+                    type="number" 
+                    step="0.1"
+                    value={formData.weight}
+                    onChange={e => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+                  />
+                  <InputCst 
+                    label="Meta de Peso Final (kg)" 
+                    type="number" 
+                    step="0.1"
+                    value={formData.targetWeight}
+                    onChange={e => handleTargetWeightChange(e.target.value)}
+                  />
+                </div>
                 <InputCst 
-                  label="Peso Atual (kg)" 
-                  type="number" 
-                  step="0.1"
-                  value={formData.weight}
-                  onChange={e => setFormData(prev => ({ ...prev, weight: e.target.value }))}
-                />
-                <InputCst 
-                  label="Meta de Gordura a Eliminar (kg)" 
+                  label="Gordura a Eliminar (kg)" 
                   type="number" 
                   step="0.1"
                   value={formData.targetLostWeight}
-                  onChange={e => setFormData(prev => ({ ...prev, targetLostWeight: e.target.value }))}
+                  onChange={e => handleTargetLostWeightChange(e.target.value)}
                 />
               </div>
 
