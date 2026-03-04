@@ -49,7 +49,7 @@ export interface Profile {
   dailyLogs: Record<number, DailyLog>;
   runDays: number[];
   runDistances: Record<number, string>;
-  runningDifficulty: 'none' | 'beginner' | 'advanced' | 'expert';
+  runningDifficulty: 'none' | 'beginner' | 'advanced' | 'expert' | '21' | '42' | '51' | '100' | 'custom';
   badges: string[];
 }
 

@@ -43,10 +43,7 @@ export default function WorkoutModule({
   const cardio = getCardioDetail(
     dayOfWeek,
     dayNum,
-    profile.focuses,
-    profile.runDays,
-    profile.runDistances,
-    profile.runningDifficulty
+    profile
   );
 
   const dailyLog = profile.dailyLogs[dayNum];

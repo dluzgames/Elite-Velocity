@@ -190,11 +190,10 @@ export const getWorkoutSplit = (gender: 'm' | 'f', focuses: string[], workoutPro
 export const getCardioDetail = (
   dayWeek: number, // 0-6 (0 is Sunday)
   dayNum: number,
-  focuses: string[],
-  runDays: number[],
-  runDistances: Record<number, string>,
-  runningDifficulty: 'none' | 'beginner' | 'advanced' | 'expert' = 'none'
+  profile: Profile
 ): { title: string; desc: string } => {
+  const { focuses, runDays, runDistances, runningDifficulty, targetDistance, duration } = profile;
+
   if (dayWeek === 0) {
     return { 
       title: "🧘 OFF: Descanso Tático", 
@@ -202,10 +201,12 @@ export const getCardioDetail = (
     };
   }
 
-  // If user has "velocidade" focus, we use a specific 5km speed cycle
-  if (runningDifficulty !== 'none' && (focuses.includes('vel') || focuses.includes('cor'))) {
+  const hasMission = ['21', '42', '51', '100', 'custom'].includes(runningDifficulty);
+
+  // If user has "velocidade" focus or a specific mission, we use a specific cycle
+  if ((runningDifficulty !== 'none' || hasMission) && (focuses.includes('vel') || focuses.includes('cor'))) {
     const cycleDay = dayNum % 6; // Cycle through 6 types of workouts
-    const isCor = focuses.includes('cor');
+    const isCor = focuses.includes('cor') || hasMission;
     switch (cycleDay) {
       case 1:
         return {
@@ -262,11 +263,18 @@ export const getCardioDetail = (
   }
 
   // Default Cardio for other focuses
-  if (runningDifficulty !== 'none' && runDays.includes(dayWeek)) {
-    const dist = runDistances[dayWeek] || '5';
+  if (runningDifficulty !== 'none' && (runDays.includes(dayWeek) || hasMission)) {
+    let dist = runDistances[dayWeek] || '5';
+    if (hasMission && !runDistances[dayWeek]) {
+      // Suggest a distance to chip away at the mission
+      const total = parseFloat(targetDistance || '0');
+      const dur = parseInt(duration || '30');
+      const suggested = Math.ceil(total / (dur / 2)); // Assume running half the days
+      dist = suggested > 0 ? suggested.toString() : '5';
+    }
     return { 
-      title: `🏃 Corrida de Manutenção (${dist}km)`, 
-      desc: `Manter ritmo constante e controlado. Foco na respiração nasal e postura ereta.` 
+      title: `🏃 Corrida de Missão (${dist}km)`, 
+      desc: `Foco em acumular quilometragem para sua meta total. Mantenha um ritmo constante.` 
     };
   }
 

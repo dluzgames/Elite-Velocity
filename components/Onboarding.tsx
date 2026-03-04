@@ -72,17 +72,11 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
       });
     }
 
-    const durationDays = parseInt(formData.duration || '30', 10);
-    const weeks = durationDays / 7;
-    const weeklyDistance = (formData.runDays?.length || 0) * dailyDistance;
-    const calculatedTargetDistance = Math.round(weeks * weeklyDistance).toString();
-
     const profile: Profile = {
       ...formData as Profile,
       id: uuidv4(),
       startDate: new Date().toISOString(),
-      runDistances,
-      targetDistance: formData.runningDifficulty === 'none' ? '0' : calculatedTargetDistance,
+      runDistances: {}, // No longer strictly tied to specific days for goal calculation
       dailyLogs: {},
       badges: []
     };
@@ -221,32 +215,50 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                   </div>
                 </div>
 
-                {/* Run Distance / Difficulty */}
+                {/* Run Distance / Mission Goal */}
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-bold text-zinc-400 uppercase">Meta de Corrida</label>
-                    <select 
-                      className="bg-zinc-900/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00FF80]"
-                      value={formData.runningDifficulty}
-                      onChange={e => {
-                        const diff = e.target.value as Profile['runningDifficulty'];
-                        updateField('runningDifficulty', diff);
-                        if (diff === 'none') {
-                          updateField('runDays', []);
-                          updateField('targetDistance', '0');
-                        }
-                      }}
-                    >
-                      <option value="none">Não ter meta de corridas</option>
-                      <option value="beginner">Iniciante (3km por treino)</option>
-                      <option value="advanced">Avançado (5km por treino)</option>
-                      <option value="expert">Experiente (10km por treino)</option>
-                    </select>
+                    <label className="text-xs font-bold text-zinc-400 uppercase">Missão de Corrida (Meta Total)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'none', label: 'Sem Meta', val: '0' },
+                        { id: '21', label: 'Meia Maratona (21km)', val: '21' },
+                        { id: '42', label: 'Maratona (42km)', val: '42' },
+                        { id: '51', label: 'Elite (51km)', val: '51' },
+                        { id: '100', label: 'Ultra (100km)', val: '100' },
+                        { id: 'custom', label: 'Personalizado', val: '' }
+                      ].map(opt => (
+                        <button
+                          key={opt.id}
+                          onClick={() => {
+                            updateField('runningDifficulty', opt.id as any);
+                            if (opt.val !== '') updateField('targetDistance', opt.val);
+                          }}
+                          className={`p-3 rounded-lg border text-xs font-bold transition-all ${
+                            formData.runningDifficulty === opt.id
+                              ? 'bg-blue-500/20 border-blue-500 text-blue-400'
+                              : 'bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
+                  {formData.runningDifficulty === 'custom' && (
+                    <InputCst 
+                      label="DISTÂNCIA TOTAL DA MISSÃO (KM)" 
+                      type="number"
+                      placeholder="Ex: 75"
+                      value={formData.targetDistance}
+                      onChange={e => updateField('targetDistance', e.target.value)}
+                    />
+                  )}
 
                   {formData.runningDifficulty !== 'none' && (
                     <div>
-                      <label className="text-xs font-bold text-zinc-400 uppercase mb-2 block">DIAS DE CORRIDA</label>
+                      <label className="text-xs font-bold text-zinc-400 uppercase mb-2 block">DIAS PREFERENCIAIS PARA CORRER</label>
                       <div className="flex gap-1 justify-between">
                         {WEEK_DAYS.map((d, i) => (
                           <button
@@ -260,7 +272,7 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                           </button>
                         ))}
                       </div>
-                      <p className="text-[10px] text-zinc-600 uppercase font-bold mt-2">Selecione os dias que você irá correr.</p>
+                      <p className="text-[10px] text-zinc-600 uppercase font-bold mt-2">Isso ajudará a organizar seu cronograma, mas você pode correr qualquer dia.</p>
                     </div>
                   )}
                 </div>

@@ -48,7 +48,7 @@ export default function RunningProgressModule({ profile, currentDay, onUpdateDis
           <div>
             <h3 className="text-[#00FF80] text-xs font-bold uppercase tracking-widest flex items-center gap-2 mb-1">
               <Flag size={14} />
-              Meta de Corrida
+              Missão de Corrida (Meta Total)
             </h3>
             <h2 className="text-3xl font-black text-white tracking-tight">
               {totalDistanceRun.toFixed(1)} <span className="text-zinc-500 text-lg">/ {targetDistance} km</span>
@@ -56,7 +56,7 @@ export default function RunningProgressModule({ profile, currentDay, onUpdateDis
           </div>
           
           <div className="text-right">
-            <p className="text-xs text-zinc-500 uppercase font-bold">Faltam</p>
+            <p className="text-xs text-zinc-500 uppercase font-bold">Saldo Restante</p>
             <p className="text-2xl font-bold text-white">{remainingDistance.toFixed(1)} km</p>
           </div>
         </div>

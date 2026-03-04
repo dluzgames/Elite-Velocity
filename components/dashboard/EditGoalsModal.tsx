@@ -119,7 +119,7 @@ export default function EditGoalsModal({ profile, isOpen, onClose, onSave }: Edi
                   <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Performance</span>
                 </div>
                 <InputCst 
-                  label="Distância Alvo (km)" 
+                  label="Distância Total da Missão (km)" 
                   type="number" 
                   step="0.1"
                   value={formData.targetDistance}
